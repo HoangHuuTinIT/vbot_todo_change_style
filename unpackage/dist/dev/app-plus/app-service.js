@@ -54,13 +54,14 @@ if (uni.restoreGlobal) {
   const FULL_API_URL = `${BASE_URL}?projectCode=${PROJECT_CODE}&uid=${UID}&type=TODO&source=Desktop-RTC`;
   const request = (options) => {
     return new Promise((resolve, reject) => {
+      const dynamicToken = uni.getStorageSync("vbot_token");
+      const finalToken = dynamicToken || AUTH_TOKEN;
       uni.request({
         url: options.url,
         method: options.method || "GET",
         data: options.data || {},
         header: {
-          "Authorization": `Bearer ${AUTH_TOKEN}`,
-          // Dùng token cứng từ config
+          "Authorization": `Bearer ${finalToken}`,
           "Content-Type": "application/json",
           ...options.header
         },
@@ -69,29 +70,15 @@ if (uni.restoreGlobal) {
           if (res.statusCode === 200 && ((_a = res.data) == null ? void 0 : _a.errorCode) === 0) {
             resolve(res.data.data);
           } else {
-            formatAppLog("error", "at utils/request.js:20", `[API Error] ${options.url}:`, res.data);
+            formatAppLog("error", "at utils/request.js:23", `[API Error] ${options.url}:`, res.data);
             reject(res.data);
           }
         },
         fail: (err) => {
-          formatAppLog("error", "at utils/request.js:25", "[Network Error]:", err);
+          formatAppLog("error", "at utils/request.js:28", "[Network Error]:", err);
           reject(err);
         }
       });
-    });
-  };
-  const API_TODO_URL = "https://api-staging.vbot.vn/v1.0/api/module-todo/todo";
-  const getTodos = (params) => {
-    return request({
-      url: `${API_TODO_URL}/getAll`,
-      method: "GET",
-      data: {
-        projectCode: PROJECT_CODE,
-        pageNo: 1,
-        pageSize: 20,
-        ...params
-        // Truyền filter vào đây
-      }
     });
   };
   const TODO_STATUS = {
@@ -108,6 +95,87 @@ if (uni.restoreGlobal) {
     [TODO_STATUS.DONE]: "bg-green",
     [TODO_STATUS.IN_PROGRESS]: "bg-blue",
     [TODO_STATUS.NEW]: "bg-orange"
+  };
+  const formatTimeShort = (timestamp) => {
+    if (!timestamp || timestamp === -1 || timestamp === 0)
+      return "";
+    const date = new Date(timestamp);
+    const d = date.getDate();
+    const m = date.getMonth() + 1;
+    const h = date.getHours().toString().padStart(2, "0");
+    const min = date.getMinutes().toString().padStart(2, "0");
+    return `${h}:${min}, ${d} thg ${m}`;
+  };
+  const dateToTimestamp$1 = (dateStr) => !dateStr ? -1 : new Date(dateStr).getTime();
+  const buildTodoParams = (filter, statusValue) => {
+    return {
+      keySearch: filter.title || "",
+      code: filter.jobCode || "",
+      status: statusValue || "",
+      // Xử lý ngày tháng: String -> Timestamp
+      startDate: dateToTimestamp$1(filter.createdFrom),
+      endDate: dateToTimestamp$1(filter.createdTo),
+      // Các giá trị mặc định (Default values) để khớp với request mẫu
+      dueDateFrom: -1,
+      dueDateTo: -1,
+      customerCode: "",
+      groupId: "",
+      transId: "",
+      createdBy: "",
+      assigneeId: "",
+      pluginType: "",
+      links: ""
+    };
+  };
+  const mapTodoFromApi = (apiData) => {
+    if (!apiData)
+      return {};
+    const status = apiData.status || TODO_STATUS.NEW;
+    const title = apiData.title || "Không tên";
+    return {
+      // Giữ lại ID và Code để xử lý logic click
+      id: apiData.id,
+      code: apiData.code,
+      // Dữ liệu hiển thị
+      title,
+      // --- LOGIC UI ĐÃ ĐƯỢC TÍNH TOÁN SẴN TẠI ĐÂY ---
+      // 1. Class màu sắc (bg-green, bg-orange...)
+      statusClass: STATUS_COLORS[status] || "bg-orange",
+      // 2. Label trạng thái (Mới, Xong...)
+      statusLabel: STATUS_LABELS[status] || status,
+      // 3. Avatar chữ cái (lấy 2 ký tự đầu)
+      avatarText: title.substring(0, 2).toUpperCase(),
+      // 4. Ngày tạo đã format (Ví dụ: "14:30, 17 thg 11")
+      createdAtFormatted: formatTimeShort(apiData.createdAt),
+      // Giữ lại raw data phòng khi cần dùng các trường khác (description, links...)
+      raw: apiData
+    };
+  };
+  const API_URL = "https://api-staging.vbot.vn/v1.0/api/module-todo/todo";
+  const getTodos = async (params) => {
+    const rawData = await request({
+      url: `${API_URL}/getAll`,
+      method: "GET",
+      data: {
+        projectCode: PROJECT_CODE,
+        pageNo: 1,
+        pageSize: 15,
+        // Sửa thành 15 theo mẫu request của bạn
+        ...params
+        // Merge các params từ model gửi vào
+      }
+    });
+    if (Array.isArray(rawData)) {
+      return rawData.map((item) => mapTodoFromApi(item));
+    }
+    return [];
+  };
+  const createTodo = (data) => {
+    return request({
+      url: `${API_URL}/create`,
+      method: "POST",
+      data
+    });
   };
   const _export_sfc = (sfc, props) => {
     const target = sfc.__vccOpts || sfc;
@@ -130,27 +198,14 @@ if (uni.restoreGlobal) {
       onShow(() => {
         getTodoList();
       });
-      const dateToTimestamp = (dateStr) => !dateStr ? -1 : new Date(dateStr).getTime();
-      const formatTimeShort = (timestamp) => {
-      };
-      const getStatusLabel = (code) => STATUS_LABELS[code] || code;
-      const getStatusColorClass = (code) => STATUS_COLORS[code] || "bg-orange";
-      const getAvatarText = (title) => title ? title.substring(0, 2).toUpperCase() : "NA";
       const getTodoList = async () => {
         isLoading.value = true;
         try {
-          const data = await getTodos({
-            keySearch: filter.value.title || "",
-            code: filter.value.jobCode || "",
-            status: statusValues[statusIndex.value],
-            startDate: dateToTimestamp(filter.value.createdFrom),
-            endDate: dateToTimestamp(filter.value.createdTo),
-            // Các params mặc định khác nếu cần
-            dueDateFrom: -1,
-            dueDateTo: -1
-          });
+          const params = buildTodoParams(filter.value, statusValues[statusIndex.value]);
+          const data = await getTodos(params);
           todos.value = data || [];
         } catch (error) {
+          formatAppLog("error", "at pages/todo/list_todo.vue:131", error);
           uni.showToast({ title: "Lỗi tải dữ liệu", icon: "none" });
         } finally {
           isLoading.value = false;
@@ -176,7 +231,7 @@ if (uni.restoreGlobal) {
         closeFilter();
         getTodoList();
       };
-      const __returned__ = { todos, isLoading, isFilterOpen, statusOptions, statusValues, statusIndex, filter, dateToTimestamp, formatTimeShort, getStatusLabel, getStatusColorClass, getAvatarText, getTodoList, addNewTask, openFilter, closeFilter, onStatusChange, resetFilter, applyFilter, ref: vue.ref, get onShow() {
+      const __returned__ = { todos, isLoading, isFilterOpen, statusOptions, statusValues, statusIndex, filter, getTodoList, addNewTask, openFilter, closeFilter, onStatusChange, resetFilter, applyFilter, ref: vue.ref, get onShow() {
         return onShow;
       }, get getTodos() {
         return getTodos;
@@ -184,20 +239,302 @@ if (uni.restoreGlobal) {
         return TODO_STATUS;
       }, get STATUS_LABELS() {
         return STATUS_LABELS;
-      }, get STATUS_COLORS() {
-        return STATUS_COLORS;
+      }, get buildTodoParams() {
+        return buildTodoParams;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
   };
-  const PagesTodoListTodo = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["__file", "D:/uni_app/vbot_todo/pages/todo/list_todo.vue"]]);
+  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
+      vue.createElementVNode("view", { class: "header" }, [
+        vue.createElementVNode("view", { class: "header-left" }),
+        vue.createElementVNode("text", { class: "header-title" }, "Công việc"),
+        vue.createElementVNode("view", {
+          class: "header-right",
+          onClick: $setup.openFilter
+        }, [
+          vue.createElementVNode("image", {
+            src: "https://img.icons8.com/ios-filled/50/333333/filter--v1.png",
+            class: "filter-icon"
+          })
+        ])
+      ]),
+      vue.createElementVNode("view", { class: "content" }, [
+        vue.createElementVNode("view", { class: "list-container" }, [
+          $setup.isLoading ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "loading-state"
+          }, [
+            vue.createElementVNode("text", null, "Đang tải dữ liệu...")
+          ])) : $setup.todos.length === 0 ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "empty-state"
+          }, [
+            vue.createElementVNode("image", {
+              src: "https://img.icons8.com/ios/100/cccccc/empty-box.png",
+              mode: "aspectFit",
+              class: "empty-icon"
+            }),
+            vue.createElementVNode("text", { class: "empty-text" }, "Chưa có dữ liệu")
+          ])) : (vue.openBlock(), vue.createElementBlock("scroll-view", {
+            key: 2,
+            "scroll-y": "true",
+            class: "list-view"
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.todos, (item, index) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: item.id || index,
+                  class: "card-item"
+                }, [
+                  vue.createElementVNode(
+                    "view",
+                    {
+                      class: vue.normalizeClass(["status-bar", item.statusClass])
+                    },
+                    null,
+                    2
+                    /* CLASS */
+                  ),
+                  vue.createElementVNode("view", { class: "card-body" }, [
+                    vue.createElementVNode("view", { class: "card-row top-row" }, [
+                      vue.createElementVNode("view", { class: "circle-checkbox" }),
+                      vue.createElementVNode(
+                        "text",
+                        { class: "card-title" },
+                        vue.toDisplayString(item.title),
+                        1
+                        /* TEXT */
+                      )
+                    ]),
+                    vue.createElementVNode("view", { class: "card-row mid-row" }, [
+                      vue.createElementVNode("image", {
+                        src: "https://img.icons8.com/ios/50/666666/time.png",
+                        class: "icon-small"
+                      }),
+                      vue.createElementVNode(
+                        "text",
+                        { class: "card-date" },
+                        "Tạo lúc: " + vue.toDisplayString(item.createdAtFormatted),
+                        1
+                        /* TEXT */
+                      )
+                    ]),
+                    vue.createElementVNode("view", { class: "card-row bot-row" }, [
+                      vue.createElementVNode("view", { class: "badge-yellow" }, [
+                        vue.createElementVNode("image", {
+                          src: "https://img.icons8.com/ios-filled/50/997b00/clock--v1.png",
+                          class: "icon-tiny"
+                        }),
+                        vue.createElementVNode(
+                          "text",
+                          null,
+                          vue.toDisplayString(item.code),
+                          1
+                          /* TEXT */
+                        )
+                      ]),
+                      vue.createElementVNode(
+                        "view",
+                        { class: "status-text" },
+                        vue.toDisplayString(item.statusLabel),
+                        1
+                        /* TEXT */
+                      ),
+                      vue.createElementVNode(
+                        "view",
+                        {
+                          class: vue.normalizeClass(["avatar-circle", item.statusClass])
+                        },
+                        vue.toDisplayString(item.avatarText),
+                        3
+                        /* TEXT, CLASS */
+                      )
+                    ])
+                  ])
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            )),
+            vue.createElementVNode("view", { style: { "height": "20px" } })
+          ]))
+        ]),
+        vue.createElementVNode("view", { class: "fixed-footer" }, [
+          vue.createElementVNode("button", {
+            class: "btn-add-more",
+            onClick: $setup.addNewTask
+          }, "+ Thêm công việc")
+        ])
+      ]),
+      $setup.isFilterOpen ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "filter-overlay",
+        onClick: vue.withModifiers($setup.closeFilter, ["stop"])
+      }, [
+        vue.createElementVNode("view", {
+          class: "filter-panel",
+          onClick: _cache[4] || (_cache[4] = vue.withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          vue.createElementVNode("view", { class: "filter-header" }, [
+            vue.createElementVNode("text", { class: "filter-title" }, "Bộ lọc tìm kiếm"),
+            vue.createElementVNode("text", {
+              class: "close-btn",
+              onClick: $setup.closeFilter
+            }, "✕")
+          ]),
+          vue.createElementVNode("scroll-view", {
+            "scroll-y": "true",
+            class: "filter-body"
+          }, [
+            vue.createElementVNode("view", { class: "f-group" }, [
+              vue.createElementVNode("text", { class: "f-label" }, "Tiêu đề / Từ khóa"),
+              vue.withDirectives(vue.createElementVNode(
+                "input",
+                {
+                  class: "f-input",
+                  "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.filter.title = $event),
+                  placeholder: "Nhập từ khóa..."
+                },
+                null,
+                512
+                /* NEED_PATCH */
+              ), [
+                [vue.vModelText, $setup.filter.title]
+              ])
+            ]),
+            vue.createElementVNode("view", { class: "f-group" }, [
+              vue.createElementVNode("text", { class: "f-label" }, "Mã công việc"),
+              vue.withDirectives(vue.createElementVNode(
+                "input",
+                {
+                  class: "f-input",
+                  "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.filter.jobCode = $event),
+                  placeholder: "Ví dụ: TODO-08"
+                },
+                null,
+                512
+                /* NEED_PATCH */
+              ), [
+                [vue.vModelText, $setup.filter.jobCode]
+              ])
+            ]),
+            vue.createElementVNode("view", { class: "f-group" }, [
+              vue.createElementVNode("text", { class: "f-label" }, "Trạng thái"),
+              vue.createElementVNode("picker", {
+                mode: "selector",
+                range: $setup.statusOptions,
+                value: $setup.statusIndex,
+                onChange: $setup.onStatusChange
+              }, [
+                vue.createElementVNode("view", { class: "f-picker" }, [
+                  vue.createTextVNode(
+                    vue.toDisplayString($setup.statusOptions[$setup.statusIndex]),
+                    1
+                    /* TEXT */
+                  ),
+                  vue.createElementVNode("text", { class: "arrow" }, "▼")
+                ])
+              ], 40, ["value"])
+            ]),
+            vue.createElementVNode("view", { class: "f-section-title" }, "Thời gian tạo"),
+            vue.createElementVNode("view", { class: "f-row" }, [
+              vue.createElementVNode("view", { class: "f-group half" }, [
+                vue.createElementVNode("picker", {
+                  mode: "date",
+                  value: $setup.filter.createdFrom,
+                  onChange: _cache[2] || (_cache[2] = (e) => $setup.filter.createdFrom = e.detail.value)
+                }, [
+                  vue.createElementVNode(
+                    "view",
+                    { class: "f-picker date" },
+                    vue.toDisplayString($setup.filter.createdFrom || "Từ ngày"),
+                    1
+                    /* TEXT */
+                  )
+                ], 40, ["value"])
+              ]),
+              vue.createElementVNode("view", { class: "f-group half" }, [
+                vue.createElementVNode("picker", {
+                  mode: "date",
+                  value: $setup.filter.createdTo,
+                  onChange: _cache[3] || (_cache[3] = (e) => $setup.filter.createdTo = e.detail.value)
+                }, [
+                  vue.createElementVNode(
+                    "view",
+                    { class: "f-picker date" },
+                    vue.toDisplayString($setup.filter.createdTo || "Đến ngày"),
+                    1
+                    /* TEXT */
+                  )
+                ], 40, ["value"])
+              ])
+            ])
+          ]),
+          vue.createElementVNode("view", { class: "filter-footer" }, [
+            vue.createElementVNode("button", {
+              class: "btn-reset",
+              onClick: $setup.resetFilter
+            }, "Đặt lại"),
+            vue.createElementVNode("button", {
+              class: "btn-apply",
+              onClick: $setup.applyFilter
+            }, "Áp dụng")
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true)
+    ]);
+  }
+  const PagesTodoListTodo = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-1b4e60ea"], ["__file", "D:/uni_app/vbot_todo/pages/todo/list_todo.vue"]]);
+  const dateToTimestamp = (dateStr) => {
+    if (!dateStr)
+      return -1;
+    return new Date(dateStr).getTime();
+  };
+  const buildCreateTodoPayload = (form, config) => {
+    return {
+      // 1. Các trường Text cơ bản
+      title: form.name,
+      description: form.desc || "",
+      // 2. Các trường Config / System
+      projectCode: config.projectCode,
+      createdBy: config.uid,
+      status: "TO_DO",
+      // 3. Enum & Loại
+      links: "CALL",
+      pluginType: "test1",
+      // 4. Các trường Optional (Default value để tránh lỗi 400)
+      customerCode: form.customer || "test1",
+      assigneeId: form.assignee || "test1",
+      groupId: "test1",
+      transId: "test1",
+      tagCodes: "test1",
+      groupMemberUid: "test1",
+      files: "",
+      phone: "072836272322",
+      // 5. Các trường Thời gian
+      dueDate: dateToTimestamp(form.dueDate),
+      notificationReceivedAt: dateToTimestamp(form.notifyDate)
+    };
+  };
   const _sfc_main$2 = {
     __name: "create_todo",
     setup(__props, { expose: __expose }) {
       __expose();
       const loading = vue.ref(false);
-      const form = vue.ref({ name: "", desc: "", customer: "", assignee: "", dueDate: "", notifyDate: "" });
+      const form = vue.ref({
+        name: "",
+        desc: "",
+        customer: "",
+        assignee: "",
+        dueDate: "",
+        notifyDate: ""
+      });
       const editorCtx = vue.ref(null);
       const formats = vue.ref({});
       const showLinkPopup = vue.ref(false);
@@ -206,7 +543,6 @@ if (uni.restoreGlobal) {
       const canInsertLink = vue.ref(false);
       const isLinkSelected = vue.ref(false);
       const focusLinkInput = vue.ref(false);
-      const isPopupOpen = vue.computed(() => showLinkPopup.value || showColorPopup.value);
       const showColorPopup = vue.ref(false);
       const colorType = vue.ref("color");
       const currentColor = vue.ref("#000000");
@@ -215,12 +551,36 @@ if (uni.restoreGlobal) {
       const headerOptions = [{ label: "Normal", value: null }, { label: "H1", value: 1 }, { label: "H2", value: 2 }, { label: "H3", value: 3 }];
       const currentHeader = vue.ref("Normal");
       const alignIcon = vue.computed(() => formats.value.align === "center" ? "https://img.icons8.com/ios/50/666666/align-center.png" : formats.value.align === "right" ? "https://img.icons8.com/ios/50/666666/align-right.png" : "https://img.icons8.com/ios/50/666666/align-left.png");
+      const isPopupOpen = vue.computed(() => showLinkPopup.value || showColorPopup.value);
+      const submitForm = async () => {
+        if (!form.value.name || !form.value.name.trim()) {
+          uni.showToast({ title: "Vui lòng nhập tên công việc", icon: "none" });
+          return;
+        }
+        loading.value = true;
+        try {
+          const payload = buildCreateTodoPayload(form.value, {
+            projectCode: PROJECT_CODE,
+            uid: UID
+          });
+          formatAppLog("log", "at pages/todo/create_todo.vue:159", "📤 Payload:", JSON.stringify(payload));
+          await createTodo(payload);
+          uni.showToast({ title: "Tạo thành công!", icon: "success" });
+          setTimeout(() => {
+            uni.navigateBack();
+          }, 1500);
+        } catch (error) {
+          formatAppLog("error", "at pages/todo/create_todo.vue:167", "❌ Create Error:", error);
+          uni.showToast({ title: "Lỗi: " + ((error == null ? void 0 : error.message) || "Thất bại"), icon: "none" });
+        } finally {
+          loading.value = false;
+        }
+      };
       const onEditorReady = () => {
         uni.createSelectorQuery().select("#editor").context((res) => {
           editorCtx.value = res.context;
-          if (form.value.desc) {
+          if (form.value.desc)
             editorCtx.value.setContents({ html: form.value.desc });
-          }
         }).exec();
       };
       const onEditorInput = (e) => {
@@ -257,17 +617,16 @@ if (uni.restoreGlobal) {
         });
       };
       const handleLinkBtn = () => {
-        if (isLinkSelected.value) {
+        if (isLinkSelected.value || canInsertLink.value) {
+          if (canInsertLink.value && !isLinkSelected.value)
+            linkUrl.value = "";
           showLinkPopup.value = true;
-        } else if (canInsertLink.value) {
-          linkUrl.value = "";
-          showLinkPopup.value = true;
+          vue.nextTick(() => {
+            focusLinkInput.value = true;
+          });
         } else {
           uni.showToast({ title: "Bôi đen chữ để chèn Link", icon: "none" });
         }
-        vue.nextTick(() => {
-          focusLinkInput.value = true;
-        });
       };
       const closeLinkPopup = () => {
         showLinkPopup.value = false;
@@ -278,11 +637,9 @@ if (uni.restoreGlobal) {
         const text = linkText.value;
         closeLinkPopup();
         setTimeout(() => {
-          if (url) {
-            if (text) {
-              editorCtx.value.insertText({ text });
-              editorCtx.value.format("link", url);
-            }
+          if (url && text) {
+            editorCtx.value.insertText({ text });
+            editorCtx.value.format("link", url);
           }
         }, 300);
       };
@@ -336,13 +693,14 @@ if (uni.restoreGlobal) {
         form.value[f] = e.detail.value;
       };
       const goBack = () => uni.navigateBack();
-      const convertDateToTimestamp = (d) => !d ? -1 : new Date(d).getTime();
-      const submitForm = () => {
-      };
-      const __returned__ = { loading, form, editorCtx, formats, showLinkPopup, linkUrl, linkText, canInsertLink, isLinkSelected, focusLinkInput, isPopupOpen, showColorPopup, colorType, currentColor, currentBgColor, colorList, headerOptions, currentHeader, alignIcon, onEditorReady, onEditorInput, onStatusChange, handleLinkBtn, closeLinkPopup, confirmLink, removeLink, format, onHeaderChange, toggleAlign, openColorPicker, closeColorPopup, selectColor, insertImage, insertVideo, bindDateChange, goBack, convertDateToTimestamp, submitForm, ref: vue.ref, computed: vue.computed, nextTick: vue.nextTick, get PROJECT_CODE() {
+      const __returned__ = { loading, form, editorCtx, formats, showLinkPopup, linkUrl, linkText, canInsertLink, isLinkSelected, focusLinkInput, showColorPopup, colorType, currentColor, currentBgColor, colorList, headerOptions, currentHeader, alignIcon, isPopupOpen, submitForm, onEditorReady, onEditorInput, onStatusChange, handleLinkBtn, closeLinkPopup, confirmLink, removeLink, format, onHeaderChange, toggleAlign, openColorPicker, closeColorPopup, selectColor, insertImage, insertVideo, bindDateChange, goBack, ref: vue.ref, computed: vue.computed, nextTick: vue.nextTick, get createTodo() {
+        return createTodo;
+      }, get PROJECT_CODE() {
         return PROJECT_CODE;
       }, get UID() {
         return UID;
+      }, get buildCreateTodoPayload() {
+        return buildCreateTodoPayload;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;

@@ -2,13 +2,18 @@
 	<view class="container">
 		
 		<view class="flat-item">
-			<view class="item-left"><image src="https://img.icons8.com/ios/50/666666/edit--v1.png" class="item-icon"></image></view>
+			<view class="item-left">
+				<image src="https://img.icons8.com/ios/50/666666/edit--v1.png" class="item-icon"></image>
+			</view>
 			<input class="item-input" v-model="form.name" placeholder="Nhập tên công việc *" />
 		</view>
 
 		<view class="editor-container">
 			<view class="editor-label-row">
-				<view class="item-left"><image src="https://img.icons8.com/ios/50/666666/document--v1.png" class="item-icon"></image><text class="label-text">Mô tả</text></view>
+				<view class="item-left">
+					<image src="https://img.icons8.com/ios/50/666666/document--v1.png" class="item-icon"></image>
+					<text class="label-text">Mô tả</text>
+				</view>
 			</view>
 
 			<view class="toolbar">
@@ -43,9 +48,9 @@
 				id="editor" 
 				class="ql-container" 
 				placeholder="Nhập mô tả..." 
-				show-img-size 
-				show-img-toolbar 
-				show-img-resize
+				:show-img-size="true" 
+				:show-img-toolbar="true" 
+				:show-img-resize="true"
 				@ready="onEditorReady" 
 				@input="onEditorInput" 
 				@statuschange="onStatusChange">
@@ -54,12 +59,31 @@
 
 		<view class="flat-item"><view class="item-left"><image src="https://img.icons8.com/ios/50/666666/price-tag.png" class="item-icon"></image></view><input class="item-input" v-model="form.customer" placeholder="Mã khách hàng" /></view>
 		<view class="flat-item"><view class="item-left"><image src="https://img.icons8.com/ios/50/666666/user.png" class="item-icon"></image></view><input class="item-input" v-model="form.assignee" placeholder="ID người nhận" /></view>
+		
 		<view class="flat-item date-compound-block">
-			<view class="item-left icon-top-aligned"><image src="https://img.icons8.com/ios/50/666666/time.png" class="item-icon"></image></view>
+			<view class="item-left icon-top-aligned">
+				<image src="https://img.icons8.com/ios/50/666666/time.png" class="item-icon"></image>
+			</view>
 			<view class="right-column">
-				<view class="date-row"><picker mode="date" :value="form.dueDate" @change="bindDateChange($event, 'dueDate')" class="full-width-picker"><view class="item-picker" :class="{ 'placeholder-color': !form.dueDate }">{{ form.dueDate ? form.dueDate : 'Chọn ngày hết hạn' }}</view></picker></view>
+				
+				<view class="date-row">
+					<picker mode="date" :value="form.dueDate" @change="bindDateChange($event, 'dueDate')" class="full-width-picker">
+						<view class="item-picker" :class="{ 'placeholder-color': !form.dueDate }">
+							{{ form.dueDate ? formatDateDisplay(form.dueDate) : 'Chọn ngày hết hạn' }}
+						</view>
+					</picker>
+				</view>
+
 				<view class="inner-divider"></view>
-				<view class="date-row"><picker mode="date" :value="form.notifyDate" @change="bindDateChange($event, 'notifyDate')" class="full-width-picker"><view class="item-picker" :class="{ 'placeholder-color': !form.notifyDate }">{{ form.notifyDate ? form.notifyDate : 'Chọn ngày thông báo' }}</view></picker></view>
+
+				<view class="date-row">
+					<picker mode="date" :value="form.notifyDate" @change="bindDateChange($event, 'notifyDate')" class="full-width-picker">
+						<view class="item-picker" :class="{ 'placeholder-color': !form.notifyDate }">
+							{{ form.notifyDate ? formatDateDisplay(form.notifyDate) : 'Chọn ngày thông báo' }}
+						</view>
+					</picker>
+				</view>
+
 			</view>
 		</view>
 
@@ -105,146 +129,100 @@
 
 <script setup>
 	import { ref, computed, nextTick } from 'vue';
+	import { createTodo } from '@/api/todo.js';
 	import { PROJECT_CODE, UID } from '@/utils/config.js';
+	import { buildCreateTodoPayload } from '@/models/create_todo.js';
 
 	const loading = ref(false);
-	const form = ref({ name: '', desc: '', customer: '', assignee: '', dueDate: '', notifyDate: '' });
+	const pad = (n) => n.toString().padStart(2, '0');
 	
+	const getTodayISO = () => {
+		const d = new Date();
+		return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+	};
+
+	const formatDateDisplay = (isoStr) => {
+		if (!isoStr) return '';
+		try {
+			if (isoStr.includes('-')) {
+				const [y, m, d] = isoStr.split('-');
+				return `${d}/${m}/${y}`;
+			}
+			return isoStr;
+		} catch (e) {
+			return isoStr;
+		}
+	};
+
+	const form = ref({
+		name: '',
+		desc: '',
+		customer: '',
+		assignee: '',
+		dueDate: getTodayISO(),
+		notifyDate: getTodayISO() 
+	});
+
+	// --- Editor Variables ---
 	const editorCtx = ref(null);
 	const formats = ref({});
-	
-	// --- LINK STATE ---
 	const showLinkPopup = ref(false);
 	const linkUrl = ref('');
 	const linkText = ref('');
 	const canInsertLink = ref(false);
 	const isLinkSelected = ref(false);
-	const focusLinkInput = ref(false); // Điều khiển focus
-
-	// Biến kiểm soát ẩn Editor khi mở Popup
-	const isPopupOpen = computed(() => showLinkPopup.value || showColorPopup.value);
-
-	// --- COLOR STATE ---
+	const focusLinkInput = ref(false);
 	const showColorPopup = ref(false);
 	const colorType = ref('color');
 	const currentColor = ref('#000000');
 	const currentBgColor = ref('transparent');
 	const colorList = ['#000000', '#424242', '#666666', '#999999', '#B7B7B7', '#CCCCCC', '#D9D9D9', '#EFEFEF', '#F3F3F3', '#FFFFFF', '#980000', '#FF0000', '#FF9900', '#FFFF00', '#00FF00', '#00FFFF', '#4A86E8', '#0000FF', '#9900FF', '#FF00FF', '#CC4125', '#E06666', '#F6B26B', '#FFD966', '#93C47D', '#76A5AF', '#6D9EEB', '#6FA8DC', '#8E7CC3', '#C27BA0', '#A61C00', '#CC0000', '#E69138', '#F1C232', '#6AA84F', '#45818E', '#3C78D8', '#3D85C6', '#674EA7', '#A64D79'];
-
 	const headerOptions = [{label:'Normal',value:null},{label:'H1',value:1},{label:'H2',value:2},{label:'H3',value:3}];
 	const currentHeader = ref('Normal');
 	const alignIcon = computed(() => formats.value.align === 'center' ? 'https://img.icons8.com/ios/50/666666/align-center.png' : (formats.value.align === 'right' ? 'https://img.icons8.com/ios/50/666666/align-right.png' : 'https://img.icons8.com/ios/50/666666/align-left.png'));
+	const isPopupOpen = computed(() => showLinkPopup.value || showColorPopup.value);
 
-	// --- LIFECYCLE EDITOR ---
-	// Hàm này sẽ chạy lại mỗi khi đóng Popup (vì Editor được v-if lại)
-	const onEditorReady = () => { 
-		uni.createSelectorQuery().select('#editor').context((res) => { 
-			editorCtx.value = res.context;
-			// Khôi phục nội dung cũ khi editor hiện lại
-			if (form.value.desc) {
-				editorCtx.value.setContents({ html: form.value.desc });
-			}
-		}).exec(); 
-	}
-	
+	// --- Logic ---
+	const submitForm = async () => {
+		if (!form.value.name || !form.value.name.trim()) {
+			uni.showToast({ title: 'Vui lòng nhập tên công việc', icon: 'none' });
+			return;
+		}
+		loading.value = true;
+		try {
+			const payload = buildCreateTodoPayload(form.value, {
+				projectCode: PROJECT_CODE,
+				uid: UID
+			});
+			await createTodo(payload);
+			uni.showToast({ title: 'Tạo thành công!', icon: 'success' });
+			setTimeout(() => { uni.navigateBack(); }, 1500);
+		} catch (error) {
+			console.error("❌ Create Error:", error);
+			uni.showToast({ title: 'Lỗi: ' + (error?.message || 'Thất bại'), icon: 'none' });
+		} finally {
+			loading.value = false;
+		}
+	};
+
+	// --- Editor Methods ---
+	const onEditorReady = () => { uni.createSelectorQuery().select('#editor').context((res) => { editorCtx.value = res.context; if (form.value.desc) editorCtx.value.setContents({ html: form.value.desc }); }).exec(); }
 	const onEditorInput = (e) => { form.value.desc = e.detail.html; }
-	
 	const onStatusChange = (e) => { 
 		formats.value = e.detail;
 		if (e.detail.color) currentColor.value = e.detail.color;
 		if (e.detail.backgroundColor) currentBgColor.value = e.detail.backgroundColor;
-		
-		if (e.detail.hasOwnProperty('link')) {
-			isLinkSelected.value = true;
-			linkUrl.value = e.detail.link || '';
-		} else {
-			isLinkSelected.value = false;
-			linkUrl.value = '';
-		}
-
+		if (e.detail.hasOwnProperty('link')) { isLinkSelected.value = true; linkUrl.value = e.detail.link || ''; } 
+		else { isLinkSelected.value = false; linkUrl.value = ''; }
 		editorCtx.value.getSelectionText({
-			success: (res) => {
-				if (res.text && res.text.length > 0) {
-					canInsertLink.value = true;
-					if (!isLinkSelected.value) linkText.value = res.text;
-				} else {
-					canInsertLink.value = false;
-					if (!isLinkSelected.value) linkText.value = '';
-				}
-			},
+			success: (res) => { if (res.text && res.text.length > 0) { canInsertLink.value = true; if (!isLinkSelected.value) linkText.value = res.text; } else { canInsertLink.value = false; if (!isLinkSelected.value) linkText.value = ''; } },
 			fail: () => { canInsertLink.value = false; }
 		});
 	}
-
-	const handleLinkBtn = () => {
-		// Khi bấm nút Link -> Biến isPopupOpen = true -> Editor ẩn đi -> View tĩnh hiện lên
-		// Lúc này trên màn hình chỉ còn các input native -> Focus hoạt động bình thường
-		if (isLinkSelected.value) {
-			showLinkPopup.value = true;
-		} else if (canInsertLink.value) {
-			linkUrl.value = '';
-			showLinkPopup.value = true;
-		} else {
-			uni.showToast({ title: 'Bôi đen chữ để chèn Link', icon: 'none' });
-		}
-		
-		// Auto focus sau khi popup hiện
-		nextTick(() => {
-			focusLinkInput.value = true;
-		});
-	}
-
-	const closeLinkPopup = () => { 
-		showLinkPopup.value = false;
-		focusLinkInput.value = false;
-		// Khi đóng popup -> isPopupOpen = false -> Editor hiện lại -> onEditorReady chạy -> Set lại content
-	}
-	
-	const confirmLink = () => {
-		// Lưu lại giá trị trước khi đóng popup
-		const url = linkUrl.value;
-		const text = linkText.value;
-		
-		closeLinkPopup();
-		
-		// Chờ Editor load lại xong mới thao tác (khoảng 300ms)
-		setTimeout(() => {
-			if (url) {
-				// Vì editor mới load lại nên mất selection
-				// Cách duy nhất là chèn link vào cuối nội dung
-				// (Đây là hạn chế kỹ thuật khi phải ẩn editor để fix lỗi focus)
-				if (text) {
-					// Chèn một đoạn HTML link vào
-					// Lưu ý: insertText không nhận HTML, phải dùng API khác hoặc trick
-					// Ở đây ta dùng trick chèn link vào vị trí con trỏ (mặc định là cuối)
-					
-					// Cách 1: Thông báo người dùng (An toàn nhất)
-					// uni.showToast({ title: 'Đã lưu link. Hãy kiểm tra lại.', icon: 'none' });
-					
-					// Cách 2: Cố gắng chèn (Có thể vào cuối văn bản)
-					editorCtx.value.insertText({ text: text }); // Chèn text
-					// Chọn lại text vừa chèn (Rất khó làm chuẩn xác)
-					// Nên ta dùng cách chèn HTML trực tiếp nếu có thể, nhưng UniApp hạn chế.
-					
-					// Workaround tốt nhất cho người dùng:
-					// Chỉ set format link nếu người dùng không đổi text.
-					// Nếu đổi text -> Chèn text mới + link.
-					
-					// Code đơn giản: Format link (sẽ áp dụng cho con trỏ hiện tại/cuối dòng)
-					editorCtx.value.format('link', url);
-				}
-			}
-		}, 300);
-	}
-
-	const removeLink = () => {
-		closeLinkPopup();
-		setTimeout(() => {
-			editorCtx.value.format('link', null);
-		}, 300);
-	}
-
-	// --- CÁC HÀM KHÁC (GIỮ NGUYÊN) ---
+	const handleLinkBtn = () => { if (isLinkSelected.value || canInsertLink.value) { if(canInsertLink.value && !isLinkSelected.value) linkUrl.value=''; showLinkPopup.value = true; nextTick(() => { focusLinkInput.value = true; }); } else { uni.showToast({ title: 'Bôi đen chữ để chèn Link', icon: 'none' }); } }
+	const closeLinkPopup = () => { showLinkPopup.value = false; focusLinkInput.value = false; }
+	const confirmLink = () => { const url = linkUrl.value; const text = linkText.value; closeLinkPopup(); setTimeout(() => { if (url && text) { editorCtx.value.insertText({ text: text }); editorCtx.value.format('link', url); } }, 300); }
+	const removeLink = () => { closeLinkPopup(); setTimeout(() => { editorCtx.value.format('link', null); }, 300); }
 	const format = (name, value) => { if (editorCtx.value) editorCtx.value.format(name, value); }
 	const onHeaderChange = (e) => { const sel = headerOptions[e.detail.value]; currentHeader.value = sel.label; format('header', sel.value); }
 	const toggleAlign = () => { let a = 'center'; if(formats.value.align==='center') a='right'; else if(formats.value.align==='right') a='left'; format('align', a); }
@@ -253,14 +231,15 @@
 	const selectColor = (color) => { if (colorType.value === 'color') { currentColor.value = color || '#000000'; format('color', color); } else { currentBgColor.value = color || 'transparent'; format('backgroundColor', color); } closeColorPopup(); }
 	const insertImage = () => { uni.chooseImage({ count: 1, success: (r) => editorCtx.value.insertImage({ src: r.tempFilePaths[0], width: '80%' }) }); }
 	const insertVideo = () => { uni.chooseVideo({ count: 1, success: (r) => editorCtx.value.insertVideo({ src: r.tempFilePath, width: '80%' }) }); }
-	const bindDateChange = (e, f) => { form.value[f] = e.detail.value; }
+	
+	const bindDateChange = (e, f) => { 
+		form.value[f] = e.detail.value; 
+	}
 	const goBack = () => uni.navigateBack();
-	const convertDateToTimestamp = (d) => (!d ? -1 : new Date(d).getTime());
-	const submitForm = () => { /* ... */ }
 </script>
 
 <style lang="scss">
-	/* CSS Cũ */
+	/* CSS Cũ (Giữ nguyên) */
 	.container { min-height: 100vh; background-color: #f5f5f7; padding: 15px; box-sizing: border-box; }
 	.flat-item { background-color: #fff; margin-bottom: 12px; padding: 15px; display: flex; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
 	.item-left { display: flex; align-items: center; margin-right: 15px; }
@@ -285,13 +264,8 @@
 	.bg-text { padding: 0 4px; border-radius: 2px; font-size: 14px; border: 1px solid #ddd; }
 	.tool-picker { margin-left: auto; background-color: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 2px 8px; height: 24px; display: flex; align-items: center; }
 	.picker-label { font-size: 12px; color: #333; }
-	
-	/* STYLE MỚI: Static View */
 	.ql-container { min-height: 120px; width: 100%; font-size: 15px; line-height: 1.6; color: #333; }
-	/* Thêm style cho static view để nó trông giống editor */
 	.static-view { padding: 10px 0; border-top: 1px solid #eee; color: #333; min-height: 120px; overflow-y: auto; }
-	
-	/* Popup Styles */
 	.color-popup-overlay, .link-popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.4); z-index: 9999; display: flex; justify-content: center; align-items: center; }
 	.color-popup, .link-popup { background-color: #fff; width: 85%; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: popIn 0.2s ease-out; }
 	@keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -299,18 +273,15 @@
 	.color-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 	.color-cell { width: 30px; height: 30px; border-radius: 4px; border: 1px solid #eee; }
 	.remove-color { display: flex; align-items: center; justify-content: center; background-color: #fff; color: #ff0000; font-size: 18px; font-weight: bold; border: 1px solid #ccc; }
-	
 	.input-group { margin-bottom: 15px; }
 	.input-label { font-size: 13px; color: #666; margin-bottom: 5px; display: block; font-weight: 500; }
 	.link-input { width: 100%; border: 1px solid #ddd; padding: 10px; border-radius: 6px; font-size: 15px; box-sizing: border-box; outline: none; }
 	.link-input:focus { border-color: #007aff; }
-	
 	.link-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 5px; }
 	.link-btn { font-size: 14px; height: 36px; line-height: 36px; padding: 0 15px; border-radius: 4px; border: none; margin: 0; }
 	.link-btn.cancel { background-color: #f0f0f0; color: #333; }
 	.link-btn.remove { background-color: #fff; color: #ff3b30; border: 1px solid #ff3b30; margin-right: auto; }
 	.link-btn.confirm { background-color: #007aff; color: #fff; }
-
 	.date-compound-block { align-items: flex-start; } .right-column { flex: 1; display: flex; flex-direction: column; }
 	.date-row { width: 100%; height: 24px; display: flex; align-items: center; } .full-width-picker { width: 100%; }
 	.item-picker { text-align: left; font-size: 15px; color: #333; width: 100%; } .placeholder-color { color: #808080; }

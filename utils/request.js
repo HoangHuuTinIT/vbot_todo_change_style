@@ -3,17 +3,20 @@ import { AUTH_TOKEN } from '@/utils/config.js';
 
 export const request = (options) => {
     return new Promise((resolve, reject) => {
+        // Ưu tiên lấy token từ Storage (do App.vue đã set), nếu không có mới dùng token cứng
+        const dynamicToken = uni.getStorageSync('vbot_token'); 
+        const finalToken = dynamicToken || AUTH_TOKEN;
+
         uni.request({
             url: options.url,
             method: options.method || 'GET',
             data: options.data || {},
             header: {
-                'Authorization': `Bearer ${AUTH_TOKEN}`, // Dùng token cứng từ config
+                'Authorization': `Bearer ${finalToken}`, 
                 'Content-Type': 'application/json',
                 ...options.header
             },
             success: (res) => {
-                // Xử lý response chuẩn
                 if (res.statusCode === 200 && res.data?.errorCode === 0) {
                     resolve(res.data.data);
                 } else {
