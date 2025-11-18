@@ -70,10 +70,10 @@ export const useListTodoController = () => {
         isLoading.value = true;
         try {
             const filterParams = buildTodoParams(
-                filter.value, 
-                statusValues[statusIndex.value],
-                sourceValues[sourceIndex.value] // Lấy giá trị link (CALL, CUSTOMER...)
-            );
+                            filter.value, 
+                            statusValues[statusIndex.value],
+                            sourceValues[sourceIndex.value] // Lấy giá trị link (CALL, CUSTOMER...)
+                        );
             const currentSize = pageSizeValues[pageSizeIndex.value];
             
             const [listData, countData] = await Promise.all([

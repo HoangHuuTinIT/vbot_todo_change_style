@@ -1,16 +1,26 @@
-// models/todo.js
 import { TODO_STATUS, STATUS_LABELS, STATUS_COLORS } from '@/utils/constants.js';
 
 // --- PRIVATE HELPERS (Dùng nội bộ) ---
-const formatTimeShort = (timestamp) => {
-    // Handle cả trường hợp server trả về 0 hoặc -1
+
+// Hàm format đầy đủ: DD/MM/YYYY HH:mm:ss
+const formatFullDateTime = (timestamp) => {
+    // Handle trường hợp server trả về null, 0 hoặc -1
     if (!timestamp || timestamp === -1 || timestamp === 0) return '';
+    
     const date = new Date(timestamp);
-    const d = date.getDate();
-    const m = date.getMonth() + 1;
+    
+    // Lấy ngày, tháng, năm
+    const d = date.getDate().toString().padStart(2, '0');
+    const m = (date.getMonth() + 1).toString().padStart(2, '0');
+    const y = date.getFullYear();
+    
+    // Lấy giờ, phút, giây
     const h = date.getHours().toString().padStart(2, '0');
     const min = date.getMinutes().toString().padStart(2, '0');
-    return `${h}:${min}, ${d} thg ${m}`;
+    const s = date.getSeconds().toString().padStart(2, '0');
+    
+    // Trả về định dạng: 18/11/2025 14:30:05
+    return `${d}/${m}/${y} ${h}:${min}:${s}`;
 };
 
 const dateToTimestamp = (dateStr) => (!dateStr ? -1 : new Date(dateStr).getTime());
@@ -19,36 +29,35 @@ const dateToTimestamp = (dateStr) => (!dateStr ? -1 : new Date(dateStr).getTime(
 
 /**
  * 1. Request Model: Chuẩn hóa tham số filter gửi lên API
- * Input: Biến filter từ UI, status đang chọn
- * Output: Object params chuẩn như log bạn gửi
+ * SỬA LỖI: Thêm tham số sourceValue vào hàm
  */
-export const buildTodoParams = (filter, statusValue) => {
+export const buildTodoParams = (filter, statusValue, sourceValue) => {
     return {
         keySearch: filter.title || '',
         code: filter.jobCode || '',
         status: statusValue || '',
         
-        // Xử lý ngày tháng: String -> Timestamp
         startDate: dateToTimestamp(filter.createdFrom),
         endDate: dateToTimestamp(filter.createdTo),
         
-        // Các giá trị mặc định (Default values) để khớp với request mẫu
-        dueDateFrom: -1,
-        dueDateTo: -1,
+        // SỬA LỖI: Đã xóa 2 dòng gán -1 bị thừa ở dưới
+        dueDateFrom: dateToTimestamp(filter.dueDateFrom),
+        dueDateTo: dateToTimestamp(filter.dueDateTo),
+        
         customerCode: '',
         groupId: '',
         transId: '',
         createdBy: '',
         assigneeId: '',
         pluginType: '',
-        links: ''
+        
+        // Nhận giá trị từ tham số thứ 3
+        links: sourceValue || ''
     };
 };
 
 /**
  * 2. Response Model: Chuẩn hóa dữ liệu từ Server về UI
- * Input: 1 item trong mảng "data" của server
- * Output: Object đã format sẵn để hiển thị
  */
 export const mapTodoFromApi = (apiData) => {
     if (!apiData) return {};
@@ -57,28 +66,22 @@ export const mapTodoFromApi = (apiData) => {
     const title = apiData.title || 'Không tên';
 
     return {
-        // Giữ lại ID và Code để xử lý logic click
         id: apiData.id,
         code: apiData.code,
-        
-        // Dữ liệu hiển thị
         title: title,
         
-        // --- LOGIC UI ĐÃ ĐƯỢC TÍNH TOÁN SẴN TẠI ĐÂY ---
-        
-        // 1. Class màu sắc (bg-green, bg-orange...)
+        // Class màu sắc
         statusClass: STATUS_COLORS[status] || 'bg-orange',
         
-        // 2. Label trạng thái (Mới, Xong...)
+        // Label trạng thái
         statusLabel: STATUS_LABELS[status] || status,
         
-        // 3. Avatar chữ cái (lấy 2 ký tự đầu)
+        // Avatar text (nếu còn dùng ở đâu đó)
         avatarText: title.substring(0, 2).toUpperCase(),
         
-        // 4. Ngày tạo đã format (Ví dụ: "14:30, 17 thg 11")
-        createdAtFormatted: formatTimeShort(apiData.createdAt),
+        // Sử dụng hàm formatFullDateTime
+        createdAtFormatted: formatFullDateTime(apiData.createdAt),
         
-        // Giữ lại raw data phòng khi cần dùng các trường khác (description, links...)
         raw: apiData
     };
 };

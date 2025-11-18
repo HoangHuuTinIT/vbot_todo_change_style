@@ -96,35 +96,37 @@ if (uni.restoreGlobal) {
     [TODO_STATUS.IN_PROGRESS]: "bg-orange",
     [TODO_STATUS.NEW]: "bg-gray"
   };
-  const formatTimeShort = (timestamp) => {
+  const formatFullDateTime = (timestamp) => {
     if (!timestamp || timestamp === -1 || timestamp === 0)
       return "";
     const date = new Date(timestamp);
-    const d = date.getDate();
-    const m = date.getMonth() + 1;
+    const d = date.getDate().toString().padStart(2, "0");
+    const m = (date.getMonth() + 1).toString().padStart(2, "0");
+    const y = date.getFullYear();
     const h = date.getHours().toString().padStart(2, "0");
     const min = date.getMinutes().toString().padStart(2, "0");
-    return `${h}:${min}, ${d} thg ${m}`;
+    const s = date.getSeconds().toString().padStart(2, "0");
+    return `${d}/${m}/${y} ${h}:${min}:${s}`;
   };
   const dateToTimestamp$1 = (dateStr) => !dateStr ? -1 : new Date(dateStr).getTime();
-  const buildTodoParams = (filter, statusValue) => {
+  const buildTodoParams = (filter, statusValue, sourceValue) => {
     return {
       keySearch: filter.title || "",
       code: filter.jobCode || "",
       status: statusValue || "",
-      // Xử lý ngày tháng: String -> Timestamp
       startDate: dateToTimestamp$1(filter.createdFrom),
       endDate: dateToTimestamp$1(filter.createdTo),
-      // Các giá trị mặc định (Default values) để khớp với request mẫu
-      dueDateFrom: -1,
-      dueDateTo: -1,
+      // SỬA LỖI: Đã xóa 2 dòng gán -1 bị thừa ở dưới
+      dueDateFrom: dateToTimestamp$1(filter.dueDateFrom),
+      dueDateTo: dateToTimestamp$1(filter.dueDateTo),
       customerCode: "",
       groupId: "",
       transId: "",
       createdBy: "",
       assigneeId: "",
       pluginType: "",
-      links: ""
+      // Nhận giá trị từ tham số thứ 3
+      links: sourceValue || ""
     };
   };
   const mapTodoFromApi = (apiData) => {
@@ -133,21 +135,17 @@ if (uni.restoreGlobal) {
     const status = apiData.status || TODO_STATUS.NEW;
     const title = apiData.title || "Không tên";
     return {
-      // Giữ lại ID và Code để xử lý logic click
       id: apiData.id,
       code: apiData.code,
-      // Dữ liệu hiển thị
       title,
-      // --- LOGIC UI ĐÃ ĐƯỢC TÍNH TOÁN SẴN TẠI ĐÂY ---
-      // 1. Class màu sắc (bg-green, bg-orange...)
+      // Class màu sắc
       statusClass: STATUS_COLORS[status] || "bg-orange",
-      // 2. Label trạng thái (Mới, Xong...)
+      // Label trạng thái
       statusLabel: STATUS_LABELS[status] || status,
-      // 3. Avatar chữ cái (lấy 2 ký tự đầu)
+      // Avatar text (nếu còn dùng ở đâu đó)
       avatarText: title.substring(0, 2).toUpperCase(),
-      // 4. Ngày tạo đã format (Ví dụ: "14:30, 17 thg 11")
-      createdAtFormatted: formatTimeShort(apiData.createdAt),
-      // Giữ lại raw data phòng khi cần dùng các trường khác (description, links...)
+      // Sử dụng hàm formatFullDateTime
+      createdAtFormatted: formatFullDateTime(apiData.createdAt),
       raw: apiData
     };
   };
