@@ -1,13 +1,13 @@
 import { ref } from 'vue';
-import { createTodo } from '@/api/todo.js';
-import { PROJECT_CODE, UID } from '@/utils/config.js';
-import { buildCreateTodoPayload } from '@/models/create_todo.js';
-import { TODO_SOURCE, DEFAULT_VALUES } from '@/utils/enums.js'; // Import nếu cần dùng default
+import { createTodo } from '@/api/todo'; // .ts không cần đuôi khi import
+import { PROJECT_CODE, UID } from '@/utils/config';
+import { buildCreateTodoPayload } from '@/models/create_todo';
+import type { TodoForm } from '@/types/todo'; // Import Type
 
 export const useCreateTodoController = () => {
     
-    // Helpers cơ bản
-    const pad = (n) => n.toString().padStart(2, '0');
+    // Helpers
+    const pad = (n: number) => n.toString().padStart(2, '0');
     const getTodayISO = () => {
         const d = new Date();
         return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -18,8 +18,10 @@ export const useCreateTodoController = () => {
     };
 
     // --- FORM STATE ---
-    const loading = ref(false);
-    const form = ref({
+    const loading = ref<boolean>(false);
+    
+    // Định nghĩa rõ kiểu cho form: Ref<TodoForm>
+    const form = ref<TodoForm>({
         name: '',
         desc: '',
         customer: '',
@@ -41,6 +43,7 @@ export const useCreateTodoController = () => {
         loading.value = true;
     
         try {
+            // Payload giờ đã được type-safe
             const payload = buildCreateTodoPayload(form.value, {
                 projectCode: PROJECT_CODE,
                 uid: UID
@@ -51,9 +54,10 @@ export const useCreateTodoController = () => {
             uni.showToast({ title: 'Tạo thành công!', icon: 'success' });
             setTimeout(() => { uni.navigateBack(); }, 1500);
     
-        } catch (error) {
+        } catch (error: any) { // Error trong TS cần xử lý kiểu
             console.error("❌ Create Error:", error);
-            uni.showToast({ title: 'Lỗi: ' + (error?.message || 'Thất bại'), icon: 'none' });
+            const errorMsg = error?.message || 'Thất bại';
+            uni.showToast({ title: 'Lỗi: ' + errorMsg, icon: 'none' });
         } finally {
             loading.value = false;
         }

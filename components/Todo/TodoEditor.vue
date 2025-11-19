@@ -78,13 +78,13 @@
     </view>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, nextTick, getCurrentInstance } from 'vue';
-import { EDITOR_CONFIG } from '@/utils/enums.js'; // Import Enum đã tạo
-
-const props = defineProps({
-    modelValue: { type: String, default: '' } // v-model binding
-});
+import { EDITOR_CONFIG } from '@/utils/enums'; // Import Enum đã tạo
+interface EditorProps {
+    modelValue: string; // V-model luôn là string
+}
+const props = defineProps<EditorProps>();
 const emit = defineEmits(['update:modelValue']);
 
 // State riêng của Editor

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import { systemLogin, getTodoToken } from '@/api/auth.js';
-import { PROJECT_CODE, UID } from '@/utils/config.js'; // Import config nếu cần fallback
+import { systemLogin, getTodoToken } from '@/api/auth';
+import { PROJECT_CODE, UID } from '@/utils/config'; // Import config nếu cần fallback
 
 export const useAuthStore = defineStore('auth', {
     // 1. STATE: Chứa dữ liệu (Giống data trong Vue)

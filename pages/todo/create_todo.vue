@@ -35,10 +35,10 @@
     </view>
 </template>
 
-<script setup>
-    import { useCreateTodoController } from '@/controllers/create_todo.js';
+<script setup lang="ts">
+    // Import file .ts (Vite sẽ tự hiểu)
+    import { useCreateTodoController } from '@/controllers/create_todo';
     
-    // Import Component con
     import TodoEditor from '@/components/Todo/TodoEditor.vue';
     import TodoDatePicker from '@/components/Todo/TodoDatePicker.vue';
 

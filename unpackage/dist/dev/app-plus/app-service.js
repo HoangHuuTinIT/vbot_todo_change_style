@@ -32,6 +32,8 @@ if (uni.restoreGlobal) {
 (function(vue) {
   "use strict";
   const ON_SHOW = "onShow";
+  const ON_HIDE = "onHide";
+  const ON_LAUNCH = "onLaunch";
   function formatAppLog(type, filename, ...args) {
     if (uni.__log__) {
       uni.__log__(type, filename, ...args);
@@ -46,6 +48,16 @@ if (uni.restoreGlobal) {
     ON_SHOW,
     1 | 2
     /* HookFlags.PAGE */
+  );
+  const onHide = /* @__PURE__ */ createLifeCycleHook(
+    ON_HIDE,
+    1 | 2
+    /* HookFlags.PAGE */
+  );
+  const onLaunch = /* @__PURE__ */ createLifeCycleHook(
+    ON_LAUNCH,
+    1
+    /* HookFlags.APP */
   );
   var isVue2 = false;
   function set(target, key, val) {
@@ -1699,14 +1711,14 @@ This will fail in production if not fixed.`);
           password,
           grant_type: "password",
           type_account: 0,
-          // [SỬA] Thay thế 'Desktop-RTC'
           source: SYSTEM_CONFIG.SOURCE_PARAM
         },
         success: (res) => {
-          if (res.statusCode === 200 && res.data.access_token) {
-            resolve(res.data);
+          const data = res.data;
+          if (res.statusCode === 200 && data.access_token) {
+            resolve(data);
           } else {
-            reject(res.data);
+            reject(data);
           }
         },
         fail: (err) => reject(err)
@@ -1721,28 +1733,24 @@ This will fail in production if not fixed.`);
         data: {
           projectCode,
           uid,
-          // [SỬA] Thay thế cứng bằng Enum
           type: SYSTEM_CONFIG.MODULE_TYPE,
-          // 'TODO'
           source: SYSTEM_CONFIG.SOURCE_PARAM
-          // 'Desktop-RTC'
         },
         header: {
           "Authorization": `Bearer ${rootToken}`
         },
         success: (res) => {
-          if (res.data && res.data.data && res.data.data.token) {
-            resolve(res.data.data.token);
+          const data = res.data;
+          if (data && data.data && data.data.token) {
+            resolve(data.data.token);
           } else {
-            reject(res.data);
+            reject(data);
           }
         },
         fail: (err) => reject(err)
       });
     });
   };
-  const PROJECT_CODE = "PR202511170947436134";
-  const UID = "77b7675d29d74cafa23771e46881db7c";
   const useAuthStore = defineStore("auth", {
     // 1. STATE: Chứa dữ liệu (Giống data trong Vue)
     state: () => ({
@@ -1788,12 +1796,12 @@ This will fail in production if not fixed.`);
       // Logic đổi Root Token lấy Todo Token
       async exchangeForTodoToken() {
         try {
-          formatAppLog("log", "at stores/auth.js:55", "🔄 Store: Đang đổi Token Todo...");
+          formatAppLog("log", "at stores/auth.ts:55", "🔄 Store: Đang đổi Token Todo...");
           const todoToken = await getTodoToken(this.rootToken, this.projectCode, this.uid);
           this.setAuthData({ todoToken });
-          formatAppLog("log", "at stores/auth.js:58", "✅ Store: Đã có Token Todo mới.");
+          formatAppLog("log", "at stores/auth.ts:58", "✅ Store: Đã có Token Todo mới.");
         } catch (error) {
-          formatAppLog("error", "at stores/auth.js:60", "❌ Store: Lỗi đổi token:", error);
+          formatAppLog("error", "at stores/auth.ts:60", "❌ Store: Lỗi đổi token:", error);
           throw error;
         }
       },
@@ -1804,7 +1812,7 @@ This will fail in production if not fixed.`);
         const devUid = "77b7675d29d74cafa23771e46881db7c";
         const devProject = "PR202511170947436134";
         try {
-          formatAppLog("log", "at stores/auth.js:78", "🛠 Store: Đang đăng nhập Dev...");
+          formatAppLog("log", "at stores/auth.ts:78", "🛠 Store: Đang đăng nhập Dev...");
           const loginData = await systemLogin(devUser, devPass);
           this.setAuthData({
             rootToken: loginData.access_token,
@@ -1813,14 +1821,14 @@ This will fail in production if not fixed.`);
           });
           await this.exchangeForTodoToken();
         } catch (error) {
-          formatAppLog("error", "at stores/auth.js:91", "❌ Store: Đăng nhập Dev thất bại", error);
+          formatAppLog("error", "at stores/auth.ts:91", "❌ Store: Đăng nhập Dev thất bại", error);
         }
       },
       // --- HÀM CHÍNH: App.vue sẽ gọi hàm này ---
       async initialize(options) {
-        formatAppLog("log", "at stores/auth.js:97", "🚀 Store: Khởi tạo Auth...");
+        formatAppLog("log", "at stores/auth.ts:97", "🚀 Store: Khởi tạo Auth...");
         if (options && options.query && (options.query.token || options.query.access_token)) {
-          formatAppLog("log", "at stores/auth.js:101", ">> Mode: Production (URL Detect)");
+          formatAppLog("log", "at stores/auth.ts:101", ">> Mode: Production (URL Detect)");
           const rootToken = options.query.token || options.query.access_token;
           const uid = options.query.uid;
           const projectCode = options.query.projectCode;
@@ -1829,14 +1837,14 @@ This will fail in production if not fixed.`);
           return;
         }
         if (this.isValidToken) {
-          formatAppLog("log", "at stores/auth.js:116", ">> Token cũ còn hạn, không cần làm gì.");
+          formatAppLog("log", "at stores/auth.ts:116", ">> Token cũ còn hạn, không cần làm gì.");
           return;
         }
-        formatAppLog("log", "at stores/auth.js:121", ">> Mode: Dev / Expired Token");
+        formatAppLog("log", "at stores/auth.ts:121", ">> Mode: Dev / Expired Token");
         await this.loginDevMode();
       },
       logout() {
-        formatAppLog("log", "at stores/auth.js:125", "👋 Store: Đăng xuất, xóa Token...");
+        formatAppLog("log", "at stores/auth.ts:125", "👋 Store: Đăng xuất, xóa Token...");
         this.rootToken = "";
         this.todoToken = "";
         this.tokenExpiry = 0;
@@ -1863,21 +1871,22 @@ This will fail in production if not fixed.`);
         data: options.data || {},
         header: headers,
         success: async (res) => {
+          const data = res.data;
           if (res.statusCode === 200) {
-            resolve(res.data.data);
+            resolve(data.data);
             return;
           }
           if (res.statusCode === 401) {
-            formatAppLog("warn", "at utils/request.js:41", `⚠️ API 401: Token hết hạn tại ${options.url}`);
+            formatAppLog("warn", "at utils/request.ts:42", `⚠️ API 401: Token hết hạn tại ${options.url}`);
             if (options._isRetry) {
-              formatAppLog("error", "at utils/request.js:46", "❌ Refresh Token cũng thất bại -> Logout.");
+              formatAppLog("error", "at utils/request.ts:45", "❌ Refresh Token cũng thất bại -> Logout.");
               authStore.logout();
-              reject(res.data);
+              reject(data);
               return;
             }
             try {
               await authStore.exchangeForTodoToken();
-              formatAppLog("log", "at utils/request.js:57", "🔄 Đã Refresh Token -> Đang gọi lại API cũ...");
+              formatAppLog("log", "at utils/request.ts:54", "🔄 Đã Refresh Token -> Đang gọi lại API cũ...");
               const retryResult = await request({
                 ...options,
                 _isRetry: true
@@ -1889,17 +1898,18 @@ This will fail in production if not fixed.`);
             }
             return;
           }
-          formatAppLog("error", "at utils/request.js:78", `[API Error ${res.statusCode}]`, res.data);
-          reject(res.data);
+          formatAppLog("error", "at utils/request.ts:71", `[API Error ${res.statusCode}]`, data);
+          reject(data);
         },
         fail: (err) => {
-          formatAppLog("error", "at utils/request.js:86", "[Network Error]", err);
-          uni.showToast({ title: "Không có kết nối mạng", icon: "none" });
+          formatAppLog("error", "at utils/request.ts:76", "[Network Error]", err);
           reject(err);
         }
       });
     });
   };
+  const PROJECT_CODE = "PR202511170947436134";
+  const UID = "77b7675d29d74cafa23771e46881db7c";
   const TODO_STATUS = {
     NEW: "TO_DO",
     IN_PROGRESS: "IN_PROGRESS",
@@ -1935,7 +1945,6 @@ This will fail in production if not fixed.`);
       status: statusValue || "",
       startDate: dateToTimestamp$1(filter.createdFrom),
       endDate: dateToTimestamp$1(filter.createdTo),
-      // SỬA LỖI: Đã xóa 2 dòng gán -1 bị thừa ở dưới
       dueDateFrom: dateToTimestamp$1(filter.dueDateFrom),
       dueDateTo: dateToTimestamp$1(filter.dueDateTo),
       customerCode: "",
@@ -1944,7 +1953,6 @@ This will fail in production if not fixed.`);
       createdBy: "",
       assigneeId: "",
       pluginType: "",
-      // Nhận giá trị từ tham số thứ 3
       links: sourceValue || ""
     };
   };
@@ -1957,13 +1965,9 @@ This will fail in production if not fixed.`);
       id: apiData.id,
       code: apiData.code,
       title,
-      // Class màu sắc
       statusClass: STATUS_COLORS[status] || "bg-orange",
-      // Label trạng thái
       statusLabel: STATUS_LABELS[status] || status,
-      // Avatar text (nếu còn dùng ở đâu đó)
       avatarText: title.substring(0, 2).toUpperCase(),
-      // Sử dụng hàm formatFullDateTime
       createdAtFormatted: formatFullDateTime(apiData.createdAt),
       raw: apiData
     };
@@ -1973,10 +1977,9 @@ This will fail in production if not fixed.`);
     const rawData = await request({
       url: `${API_URL}/getAll`,
       method: "GET",
+      // Lưu ý: Phải là POST để gửi data filter
       data: {
         projectCode: PROJECT_CODE,
-        // pageNo và pageSize sẽ được truyền từ params bên ngoài vào
-        // Nếu không có thì mới lấy mặc định
         pageNo: params.pageNo || 1,
         pageSize: params.pageSize || 15,
         ...params
@@ -1991,14 +1994,13 @@ This will fail in production if not fixed.`);
     const result = await request({
       url: `${API_URL}/countAll`,
       method: "GET",
+      // Lưu ý: Phải là POST
       data: {
         projectCode: PROJECT_CODE,
         ...params
-        // params ở đây chính là bộ lọc (keySearch, code, status,...)
-        // buildTodoParams đã chuẩn hóa đúng format (-1, rỗng) như yêu cầu
       }
     });
-    return result || 0;
+    return Number(result) || 0;
   };
   const createTodo = (data) => {
     return request({
@@ -2029,21 +2031,14 @@ This will fail in production if not fixed.`);
     const customerIndex = vue.ref(0);
     const assigneeOptions = ["Tất cả", "User 1", "User 2"];
     const assigneeIndex = vue.ref(0);
-    const sourceOptions = ["Tất cả", "CALL", "CUSTOMER", "CONVERSATION", "CHAT_MESSAGE"];
-    const sourceValues = [
-      "",
-      TODO_SOURCE.CALL,
-      TODO_SOURCE.CUSTOMER,
-      TODO_SOURCE.CONVERSATION,
-      TODO_SOURCE.CHAT_MESSAGE
-    ];
+    const sourceOptions = ["Tất cả", "Cuộc gọi (CALL)", "Khách hàng (CUSTOMER)", "Hội thoại (CONVERSATION)", "Tin nhắn (CHAT_MESSAGE)"];
+    const sourceValues = ["", TODO_SOURCE.CALL, TODO_SOURCE.CUSTOMER, TODO_SOURCE.CONVERSATION, TODO_SOURCE.CHAT_MESSAGE];
     const sourceIndex = vue.ref(0);
     const filter = vue.ref({
       title: "",
       jobCode: "",
       createdFrom: "",
       createdTo: "",
-      // Thêm date hết hạn
       dueDateFrom: "",
       dueDateTo: ""
     });
@@ -2065,7 +2060,6 @@ This will fail in production if not fixed.`);
           filter.value,
           statusValues[statusIndex.value],
           sourceValues[sourceIndex.value]
-          // Lấy giá trị link (CALL, CUSTOMER...)
         );
         const currentSize = pageSizeValues[pageSizeIndex.value];
         const [listData, countData] = await Promise.all([
@@ -2079,7 +2073,7 @@ This will fail in production if not fixed.`);
         todos.value = listData || [];
         totalItems.value = countData || 0;
       } catch (error) {
-        formatAppLog("error", "at controllers/list_todo.js:97", error);
+        formatAppLog("error", "at controllers/list_todo.ts:82", error);
         uni.showToast({ title: "Lỗi tải dữ liệu", icon: "none" });
       } finally {
         isLoading.value = false;
@@ -2115,7 +2109,7 @@ This will fail in production if not fixed.`);
         itemToDelete.value = null;
         getTodoList();
       } catch (error) {
-        formatAppLog("error", "at controllers/list_todo.js:131", "Delete Error:", error);
+        formatAppLog("error", "at controllers/list_todo.ts:117", "Delete Error:", error);
         uni.showToast({ title: "Xóa thất bại", icon: "none" });
       }
     };
@@ -2184,7 +2178,6 @@ This will fail in production if not fixed.`);
       filter,
       isConfirmDeleteOpen,
       itemToDelete,
-      // Pagination
       pageSizeOptions,
       pageSizeIndex,
       currentPage,
@@ -2192,7 +2185,6 @@ This will fail in production if not fixed.`);
       totalItems,
       onPageSizeChange,
       changePage,
-      // Options & Indexes cho Filter
       statusOptions,
       statusIndex,
       onStatusChange,
@@ -2208,7 +2200,6 @@ This will fail in production if not fixed.`);
       sourceOptions,
       sourceIndex,
       onSourceChange,
-      // Actions
       addNewTask,
       openFilter,
       closeFilter,
@@ -2219,14 +2210,7 @@ This will fail in production if not fixed.`);
       confirmDelete
     };
   };
-  const _export_sfc = (sfc, props) => {
-    const target = sfc.__vccOpts || sfc;
-    for (const [key, val] of props) {
-      target[key] = val;
-    }
-    return target;
-  };
-  const _sfc_main$5 = {
+  const _sfc_main$5 = /* @__PURE__ */ vue.defineComponent({
     __name: "list_todo",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -2270,12 +2254,17 @@ This will fail in production if not fixed.`);
         cancelDelete,
         confirmDelete
       } = useListTodoController();
-      const __returned__ = { todos, isLoading, isFilterOpen, filter, isConfirmDeleteOpen, itemToDelete, pageSizeOptions, pageSizeIndex, currentPage, totalPages, onPageSizeChange, changePage, statusOptions, statusIndex, onStatusChange, creatorOptions, creatorIndex, onCreatorChange, customerOptions, customerIndex, onCustomerChange, assigneeOptions, assigneeIndex, onAssigneeChange, sourceOptions, sourceIndex, onSourceChange, addNewTask, openFilter, closeFilter, resetFilter, applyFilter, showActionMenu, cancelDelete, confirmDelete, get useListTodoController() {
-        return useListTodoController;
-      } };
+      const __returned__ = { todos, isLoading, isFilterOpen, filter, isConfirmDeleteOpen, itemToDelete, pageSizeOptions, pageSizeIndex, currentPage, totalPages, onPageSizeChange, changePage, statusOptions, statusIndex, onStatusChange, creatorOptions, creatorIndex, onCreatorChange, customerOptions, customerIndex, onCustomerChange, assigneeOptions, assigneeIndex, onAssigneeChange, sourceOptions, sourceIndex, onSourceChange, addNewTask, openFilter, closeFilter, resetFilter, applyFilter, showActionMenu, cancelDelete, confirmDelete };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
+  });
+  const _export_sfc = (sfc, props) => {
+    const target = sfc.__vccOpts || sfc;
+    for (const [key, val] of props) {
+      target[key] = val;
+    }
+    return target;
   };
   function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
     var _a;
@@ -2716,21 +2705,16 @@ This will fail in production if not fixed.`);
       description: form.desc || DEFAULT_VALUES.STRING,
       projectCode: config.projectCode,
       createdBy: config.uid,
-      // [SỬA] Dùng Constant có sẵn
       status: TODO_STATUS.NEW,
-      // Thay cho 'TO_DO'
-      // [SỬA] Dùng Enum
+      // Ép kiểu nếu constants JS chưa chuẩn
       links: TODO_SOURCE.CALL,
-      // Thay cho 'CALL'
       pluginType: DEFAULT_VALUES.PLUGIN_TYPE,
-      // [SỬA] Dùng Default Values
       customerCode: form.customer || DEFAULT_VALUES.CUSTOMER_CODE,
       assigneeId: form.assignee || DEFAULT_VALUES.ASSIGNEE_ID,
       groupId: DEFAULT_VALUES.GROUP_ID,
       transId: DEFAULT_VALUES.TRANS_ID,
-      // Các trường legacy (nếu chưa clear được thì để tạm hoặc tạo const)
-      tagCodes: "",
-      groupMemberUid: "",
+      tagCodes: "test1",
+      groupMemberUid: "test1",
       files: DEFAULT_VALUES.STRING,
       phone: DEFAULT_VALUES.PHONE_PLACEHOLDER,
       dueDate: dateToTimestamp(fullDueDate),
@@ -2775,8 +2759,9 @@ This will fail in production if not fixed.`);
           uni.navigateBack();
         }, 1500);
       } catch (error) {
-        formatAppLog("error", "at controllers/create_todo.js:55", "❌ Create Error:", error);
-        uni.showToast({ title: "Lỗi: " + ((error == null ? void 0 : error.message) || "Thất bại"), icon: "none" });
+        formatAppLog("error", "at controllers/create_todo.ts:58", "❌ Create Error:", error);
+        const errorMsg = (error == null ? void 0 : error.message) || "Thất bại";
+        uni.showToast({ title: "Lỗi: " + errorMsg, icon: "none" });
       } finally {
         loading.value = false;
       }
@@ -2788,11 +2773,10 @@ This will fail in production if not fixed.`);
       submitForm
     };
   };
-  const _sfc_main$4 = {
+  const _sfc_main$4 = /* @__PURE__ */ vue.defineComponent({
     __name: "TodoEditor",
     props: {
-      modelValue: { type: String, default: "" }
-      // v-model binding
+      modelValue: { type: String, required: true }
     },
     emits: ["update:modelValue"],
     setup(__props, { expose: __expose, emit: __emit }) {
@@ -2933,13 +2917,11 @@ This will fail in production if not fixed.`);
       const insertVideo = () => {
         uni.chooseVideo({ count: 1, success: (r) => editorCtx.value.insertVideo({ src: r.tempFilePath, width: "80%" }) });
       };
-      const __returned__ = { props, emit, editorCtx, formats, instance, showLinkPopup, linkUrl, linkText, canInsertLink, isLinkSelected, focusLinkInput, showColorPopup, colorType, currentColor, currentBgColor, currentHeader, colorList, headerOptions, alignIcon, isPopupOpen, onEditorReady, onEditorInput, onStatusChange, format, handleLinkBtn, closeLinkPopup, confirmLink, removeLink, onHeaderChange, toggleAlign, openColorPicker, closeColorPopup, selectColor, insertImage, insertVideo, ref: vue.ref, computed: vue.computed, nextTick: vue.nextTick, getCurrentInstance: vue.getCurrentInstance, get EDITOR_CONFIG() {
-        return EDITOR_CONFIG;
-      } };
+      const __returned__ = { props, emit, editorCtx, formats, instance, showLinkPopup, linkUrl, linkText, canInsertLink, isLinkSelected, focusLinkInput, showColorPopup, colorType, currentColor, currentBgColor, currentHeader, colorList, headerOptions, alignIcon, isPopupOpen, onEditorReady, onEditorInput, onStatusChange, format, handleLinkBtn, closeLinkPopup, confirmLink, removeLink, onHeaderChange, toggleAlign, openColorPicker, closeColorPopup, selectColor, insertImage, insertVideo };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
-  };
+  });
   function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "editor-wrapper" }, [
       vue.createElementVNode("view", { class: "editor-label-row" }, [
@@ -3263,12 +3245,12 @@ This will fail in production if not fixed.`);
     ]);
   }
   const TodoEditor = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-7d79903f"], ["__file", "D:/uni_app/vbot_todo/components/Todo/TodoEditor.vue"]]);
-  const _sfc_main$3 = {
+  const _sfc_main$3 = /* @__PURE__ */ vue.defineComponent({
     __name: "TodoDatePicker",
     props: {
-      dueDate: { type: String, default: "" },
-      notifyDate: { type: String, default: "" },
-      notifyTime: { type: String, default: "" }
+      dueDate: { type: String, required: true },
+      notifyDate: { type: String, required: true },
+      notifyTime: { type: String, required: true }
     },
     emits: ["update:dueDate", "update:notifyDate", "update:notifyTime"],
     setup(__props, { expose: __expose, emit: __emit }) {
@@ -3295,7 +3277,7 @@ This will fail in production if not fixed.`);
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
-  };
+  });
   function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "flat-item date-compound-block" }, [
       vue.createElementVNode("view", { class: "item-left icon-top-aligned" }, [
@@ -3377,18 +3359,16 @@ This will fail in production if not fixed.`);
     ]);
   }
   const TodoDatePicker = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-245edb6a"], ["__file", "D:/uni_app/vbot_todo/components/Todo/TodoDatePicker.vue"]]);
-  const _sfc_main$2 = {
+  const _sfc_main$2 = /* @__PURE__ */ vue.defineComponent({
     __name: "create_todo",
     setup(__props, { expose: __expose }) {
       __expose();
       const { loading, form, goBack, submitForm } = useCreateTodoController();
-      const __returned__ = { loading, form, goBack, submitForm, get useCreateTodoController() {
-        return useCreateTodoController;
-      }, TodoEditor, TodoDatePicker };
+      const __returned__ = { loading, form, goBack, submitForm, TodoEditor, TodoDatePicker };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
-  };
+  });
   function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
       vue.createElementVNode("view", { class: "flat-item" }, [
@@ -3512,55 +3492,34 @@ This will fail in production if not fixed.`);
   __definePage("pages/todo/list_todo", PagesTodoListTodo);
   __definePage("pages/todo/create_todo", PagesTodoCreateTodo);
   __definePage("pages/index/index", PagesIndexIndex);
-  const _sfc_main = {
-    onLaunch: async function(options) {
-      formatAppLog("log", "at App.vue:6", "--- App Launching ---");
-      if (options && options.query && options.query.token) {
-        formatAppLog("log", "at App.vue:11", ">> Mode: Production (Cập nhật Token từ URL)");
-        const rootToken = options.query.token || options.query.access_token;
-        const uid2 = options.query.uid;
-        const projectCode2 = options.query.projectCode;
-        await this.handleGetTodoToken(rootToken, projectCode2, uid2);
-        return;
-      }
-      formatAppLog("log", "at App.vue:21", ">> Mode: Development");
-      const storedTodoToken = uni.getStorageSync("todo_access_token");
-      const tokenExpiryTime = uni.getStorageSync("token_expiry_time");
-      const now2 = Date.now();
-      if (storedTodoToken && tokenExpiryTime && now2 < tokenExpiryTime) {
-        formatAppLog("log", "at App.vue:30", ">> Token cũ vẫn còn hạn, không cần Login lại.");
-        return;
-      }
-      formatAppLog("log", "at App.vue:35", ">> Token hết hạn hoặc không có, đang Login lại...");
-      const devUser = "647890427";
-      const devPass = "53496785941d8dc2f5aa3e98e753eb3d0780de9fda3d9ac1761c47eaae28ae39";
-      const uid = "77b7675d29d74cafa23771e46881db7c";
-      const projectCode = "PR202511170947436134";
-      try {
-        const loginData = await systemLogin(devUser, devPass);
-        await this.handleGetTodoToken(loginData.access_token, projectCode, uid);
-      } catch (e) {
-        formatAppLog("error", "at App.vue:46", "Dev Login thất bại", e);
-      }
-    },
-    methods: {
-      // Tách hàm này ra để tái sử dụng
-      async handleGetTodoToken(rootToken, projectCode, uid) {
-        try {
-          uni.setStorageSync("vbot_root_token", rootToken);
-          uni.setStorageSync("vbot_uid", uid);
-          uni.setStorageSync("vbot_project_code", projectCode);
-          const todoToken = await getTodoToken(rootToken, projectCode, uid);
-          uni.setStorageSync("todo_access_token", todoToken);
-          const expiresIn = 3600 * 1e3;
-          uni.setStorageSync("token_expiry_time", Date.now() + expiresIn);
-          formatAppLog("log", "at App.vue:69", ">>> Đã cập nhật Todo Token mới.");
-        } catch (err) {
-          formatAppLog("error", "at App.vue:71", "Lỗi lấy Todo Token:", err);
-        }
-      }
+  const _sfc_main = /* @__PURE__ */ vue.defineComponent({
+    __name: "App",
+    setup(__props, { expose: __expose }) {
+      __expose();
+      onLaunch((options) => {
+        formatAppLog("log", "at App.vue:6", "App Launch");
+        const authStore = useAuthStore();
+        authStore.initialize(options);
+      });
+      onShow(() => {
+        formatAppLog("log", "at App.vue:13", "App Show");
+      });
+      onHide(() => {
+        formatAppLog("log", "at App.vue:17", "App Hide");
+      });
+      const __returned__ = { get useAuthStore() {
+        return useAuthStore;
+      }, get onLaunch() {
+        return onLaunch;
+      }, get onShow() {
+        return onShow;
+      }, get onHide() {
+        return onHide;
+      } };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
     }
-  };
+  });
   const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "D:/uni_app/vbot_todo/App.vue"]]);
   function createApp() {
     const app = vue.createVueApp(App);

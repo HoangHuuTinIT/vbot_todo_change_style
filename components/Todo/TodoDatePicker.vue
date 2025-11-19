@@ -35,18 +35,18 @@
     </view>
 </template>
 
-<script setup>
+<script setup lang="ts">
 // Define Props & Emits để 2 chiều dữ liệu (v-model)
-const props = defineProps({
-    dueDate: { type: String, default: '' },
-    notifyDate: { type: String, default: '' },
-    notifyTime: { type: String, default: '' }
-});
-
+interface DatePickerProps {
+    dueDate: string;
+    notifyDate: string;
+    notifyTime: string;
+}
+const props = defineProps<DatePickerProps>();
+// Cú pháp v-model:field cần định nghĩa cả 3 emits
 const emit = defineEmits(['update:dueDate', 'update:notifyDate', 'update:notifyTime']);
 
-const onDateChange = (e, field) => {
-    // Phát sự kiện update:field để cập nhật dữ liệu ở cha
+const onDateChange = (e: any, field: keyof DatePickerProps) => {
     emit(`update:${field}`, e.detail.value);
 };
 

@@ -172,8 +172,8 @@
 	</view>
 </template>
 
-<script setup>
-	import { useListTodoController } from '@/controllers/list_todo.js';
+<script setup lang="ts">
+	import { useListTodoController } from '@/controllers/list_todo';
 
 	const { 
 		todos, isLoading, isFilterOpen, filter,

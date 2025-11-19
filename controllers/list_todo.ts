@@ -1,60 +1,44 @@
 import { ref, computed } from 'vue';
 import { onShow } from '@dcloudio/uni-app';
-import { getTodos, getTodoCount, deleteTodo } from '@/api/todo.js';
-import { TODO_STATUS, STATUS_LABELS } from '@/utils/constants.js';
-import { buildTodoParams } from '@/models/todo.js';
-import { TODO_SOURCE } from '@/utils/enums.js';
+// Import từ file .ts (bỏ đuôi .js khi import cũng được)
+import { getTodos, getTodoCount, deleteTodo } from '@/api/todo'; 
+import { TODO_STATUS, STATUS_LABELS } from '@/utils/constants';
+import { buildTodoParams } from '@/models/todo'; // Import từ .ts
+import { TODO_SOURCE } from '@/utils/enums';
+import type { TodoItem } from '@/types/todo';
+
 export const useListTodoController = () => {
     // --- STATE CƠ BẢN ---
-    const todos = ref([]);
-    const isLoading = ref(false);
-    const isFilterOpen = ref(false);
+    // Định nghĩa rõ mảng chứa các TodoItem
+    const todos = ref<TodoItem[]>([]);
+    const isLoading = ref<boolean>(false);
+    const isFilterOpen = ref<boolean>(false);
     
-    // State cho Popup xóa
-    const isConfirmDeleteOpen = ref(false);
-    const itemToDelete = ref(null);
+    const isConfirmDeleteOpen = ref<boolean>(false);
+    const itemToDelete = ref<TodoItem | null>(null);
 
     // --- FILTER CONFIG ---
-
-    // 1. Trạng thái (Cũ)
     const statusOptions = ['Tất cả', STATUS_LABELS[TODO_STATUS.NEW], STATUS_LABELS[TODO_STATUS.IN_PROGRESS], STATUS_LABELS[TODO_STATUS.DONE]];
     const statusValues = ['', TODO_STATUS.NEW, TODO_STATUS.IN_PROGRESS, TODO_STATUS.DONE];
-    const statusIndex = ref(0);
+    const statusIndex = ref<number>(0);
 
-    // 2. Các bộ lọc MỚI (UI Only - Chưa có logic API)
-    // Người tạo
+    // ... (Giữ nguyên creatorOptions, customerOptions...)
     const creatorOptions = ['Tất cả', 'Nguyễn Văn A', 'Trần Thị B', 'Admin'];
     const creatorIndex = ref(0);
-    
-    // Mã khách hàng
     const customerOptions = ['Tất cả', 'KH001', 'KH002', 'VNG'];
     const customerIndex = ref(0);
-
-    // Người giao
     const assigneeOptions = ['Tất cả', 'User 1', 'User 2'];
     const assigneeIndex = ref(0);
 
-    // Nguồn
-    const sourceOptions = ['Tất cả', 'CALL', 'CUSTOMER', 'CONVERSATION', 'CHAT_MESSAGE'];
-        // Giá trị bắn API tương ứng (map 1-1 với mảng trên)
-        const sourceValues = [
-                '', 
-                TODO_SOURCE.CALL, 
-                TODO_SOURCE.CUSTOMER, 
-                TODO_SOURCE.CONVERSATION, 
-                TODO_SOURCE.CHAT_MESSAGE
-            ];
-        const sourceIndex = ref(0);
+    // Source Enum
+    const sourceOptions = ['Tất cả', 'Cuộc gọi (CALL)', 'Khách hàng (CUSTOMER)', 'Hội thoại (CONVERSATION)', 'Tin nhắn (CHAT_MESSAGE)'];
+    const sourceValues = ['', TODO_SOURCE.CALL, TODO_SOURCE.CUSTOMER, TODO_SOURCE.CONVERSATION, TODO_SOURCE.CHAT_MESSAGE];
+    const sourceIndex = ref<number>(0);
 
-    // Object chứa giá trị input/date
     const filter = ref({ 
-        title: '', 
-        jobCode: '', 
-        createdFrom: '', 
-        createdTo: '',
-        // Thêm date hết hạn
-        dueDateFrom: '',
-        dueDateTo: ''
+        title: '', jobCode: '', 
+        createdFrom: '', createdTo: '',
+        dueDateFrom: '', dueDateTo: ''
     });
 
     // --- STATE PHÂN TRANG ---
@@ -71,17 +55,18 @@ export const useListTodoController = () => {
     });
 
     // --- METHODS ---
-
     const getTodoList = async () => {
         isLoading.value = true;
         try {
             const filterParams = buildTodoParams(
-                            filter.value, 
-                            statusValues[statusIndex.value],
-                            sourceValues[sourceIndex.value] // Lấy giá trị link (CALL, CUSTOMER...)
-                        );
+                filter.value, 
+                statusValues[statusIndex.value],
+                sourceValues[sourceIndex.value]
+            );
+            
             const currentSize = pageSizeValues[pageSizeIndex.value];
             
+            // Vì getTodos và getTodoCount đã trả về Promise đúng kiểu, code này an toàn
             const [listData, countData] = await Promise.all([
                 getTodos({ 
                     ...filterParams, 
@@ -101,14 +86,13 @@ export const useListTodoController = () => {
         }
     };
 
-    // Handlers cho Pagination
-    const onPageSizeChange = (e) => {
+    const onPageSizeChange = (e: any) => {
         pageSizeIndex.value = e.detail.value;
         currentPage.value = 1;
         getTodoList();
     };
 
-    const changePage = (direction) => {
+    const changePage = (direction: number) => {
         const newPage = currentPage.value + direction;
         if (newPage >= 1 && newPage <= totalPages.value) {
             currentPage.value = newPage;
@@ -117,11 +101,13 @@ export const useListTodoController = () => {
     };
 
     // Logic Xóa
-    const onRequestDelete = (item) => { itemToDelete.value = item; isConfirmDeleteOpen.value = true; };
+    const onRequestDelete = (item: TodoItem) => { itemToDelete.value = item; isConfirmDeleteOpen.value = true; };
     const cancelDelete = () => { isConfirmDeleteOpen.value = false; itemToDelete.value = null; };
+    
     const confirmDelete = async () => {
         if (!itemToDelete.value) return;
         try {
+            // itemToDelete.value.id đã được TS đảm bảo tồn tại
             await deleteTodo(itemToDelete.value.id);
             uni.showToast({ title: 'Đã xóa thành công', icon: 'success' });
             isConfirmDeleteOpen.value = false;
@@ -133,7 +119,7 @@ export const useListTodoController = () => {
         }
     };
 
-    const showActionMenu = (item) => {
+    const showActionMenu = (item: TodoItem) => {
         uni.showActionSheet({
             itemList: ['Xóa công việc'],
             itemColor: '#ff3b30',
@@ -143,32 +129,28 @@ export const useListTodoController = () => {
         });
     };
 
-    // UI Actions
+    // ... (Các hàm UI Actions giữ nguyên logic, chỉ thêm : any vào event nếu cần)
     const addNewTask = () => { uni.navigateTo({ url: '/pages/todo/create_todo' }); };
     const openFilter = () => { isFilterOpen.value = true; };
     const closeFilter = () => { isFilterOpen.value = false; };
     
-    // Change Handlers cho Filter
-    const onStatusChange = (e) => { statusIndex.value = e.detail.value; };
-    const onCreatorChange = (e) => { creatorIndex.value = e.detail.value; };
-    const onCustomerChange = (e) => { customerIndex.value = e.detail.value; };
-    const onAssigneeChange = (e) => { assigneeIndex.value = e.detail.value; };
-    const onSourceChange = (e) => { sourceIndex.value = e.detail.value; };
+    const onStatusChange = (e: any) => { statusIndex.value = e.detail.value; };
+    const onCreatorChange = (e: any) => { creatorIndex.value = e.detail.value; };
+    const onCustomerChange = (e: any) => { customerIndex.value = e.detail.value; };
+    const onAssigneeChange = (e: any) => { assigneeIndex.value = e.detail.value; };
+    const onSourceChange = (e: any) => { sourceIndex.value = e.detail.value; };
 
     const resetFilter = () => { 
-        // Reset text fields
         filter.value = { 
             title: '', jobCode: '', 
             createdFrom: '', createdTo: '',
             dueDateFrom: '', dueDateTo: ''
         }; 
-        // Reset pickers
         statusIndex.value = 0; 
         creatorIndex.value = 0;
         customerIndex.value = 0;
         assigneeIndex.value = 0;
         sourceIndex.value = 0;
-
         currentPage.value = 1;
     };
     
@@ -183,15 +165,12 @@ export const useListTodoController = () => {
     return {
         todos, isLoading, isFilterOpen, filter,
         isConfirmDeleteOpen, itemToDelete,
-        // Pagination
         pageSizeOptions, pageSizeIndex, currentPage, totalPages, totalItems, onPageSizeChange, changePage,
-        // Options & Indexes cho Filter
         statusOptions, statusIndex, onStatusChange,
         creatorOptions, creatorIndex, onCreatorChange,
         customerOptions, customerIndex, onCustomerChange,
         assigneeOptions, assigneeIndex, onAssigneeChange,
         sourceOptions, sourceIndex, onSourceChange,
-        // Actions
         addNewTask, openFilter, closeFilter, resetFilter, applyFilter,
         showActionMenu, cancelDelete, confirmDelete
     };

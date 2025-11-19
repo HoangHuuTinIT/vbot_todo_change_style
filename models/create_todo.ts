@@ -1,9 +1,10 @@
-// models/create_todo.js
-import { TODO_STATUS } from '@/utils/constants.js'; // Import Status
-import { TODO_SOURCE, DEFAULT_VALUES } from '@/utils/enums.js'; // Import Enums
+import { TODO_STATUS } from '@/utils/constants';
+import { TODO_SOURCE, DEFAULT_VALUES } from '@/utils/enums';
+// Import Types
+import type { TodoForm, CreateTodoPayload, AppConfig } from '@/types/todo';
 
 // Helper: Chuyển đổi chuỗi ngày giờ sang timestamp
-const dateToTimestamp = (dateStr) => {
+const dateToTimestamp = (dateStr: string): number => {
     if (!dateStr) return -1;
     const safeDateStr = dateStr.replace(/\//g, '-');
     const dateObj = new Date(safeDateStr);
@@ -12,8 +13,9 @@ const dateToTimestamp = (dateStr) => {
 
 /**
  * Model: Xây dựng Payload
+ * Bây giờ hàm này trả về kiểu CreateTodoPayload -> IDE sẽ biết chính xác kết quả trả về có gì
  */
-export const buildCreateTodoPayload = (form, config) => {
+export const buildCreateTodoPayload = (form: TodoForm, config: AppConfig): CreateTodoPayload => {
     
     const fullNotifyDateTime = `${form.notifyDate} ${form.notifyTime || '00:00'}`;
     const fullDueDate = form.dueDate; 
@@ -25,24 +27,18 @@ export const buildCreateTodoPayload = (form, config) => {
         projectCode: config.projectCode,
         createdBy: config.uid,
         
-        // [SỬA] Dùng Constant có sẵn
-        status: TODO_STATUS.NEW, // Thay cho 'TO_DO'
-        
-        // [SỬA] Dùng Enum
-        links: TODO_SOURCE.CALL, // Thay cho 'CALL'
-        
+        status: TODO_STATUS.NEW as any, // Ép kiểu nếu constants JS chưa chuẩn
+        links: TODO_SOURCE.CALL,
         pluginType: DEFAULT_VALUES.PLUGIN_TYPE, 
         
-        // [SỬA] Dùng Default Values
         customerCode: form.customer || DEFAULT_VALUES.CUSTOMER_CODE, 
         assigneeId: form.assignee || DEFAULT_VALUES.ASSIGNEE_ID,       
         
         groupId: DEFAULT_VALUES.GROUP_ID,
         transId: DEFAULT_VALUES.TRANS_ID,
         
-        // Các trường legacy (nếu chưa clear được thì để tạm hoặc tạo const)
-        tagCodes: "", 
-        groupMemberUid: "",
+        tagCodes: "test1", 
+        groupMemberUid: "test1",
         files: DEFAULT_VALUES.STRING,
         phone: DEFAULT_VALUES.PHONE_PLACEHOLDER,
         
