@@ -23,7 +23,13 @@
 		"navigationBarTextStyle": "black",
 		"navigationBarTitleText": "uni-app",
 		"navigationBarBackgroundColor": "#F8F8F8",
-		"backgroundColor": "#F8F8F8"
+		"backgroundColor": "#F8F8F8",
+		"rpxCalcMaxDeviceWidth": 960,
+		
+		"usingComponts": true,
+		    "themeConfig": {
+		      "is  Support Dark": true
+		    }
 	},
 	"uniIdRouter": {}
 }
