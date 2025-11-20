@@ -31,7 +31,7 @@ export const buildCreateTodoPayload = (form: TodoForm, config: AppConfig): Creat
         links: TODO_SOURCE.CALL,
         pluginType: DEFAULT_VALUES.PLUGIN_TYPE, 
         
-        customerCode: form.customer || DEFAULT_VALUES.CUSTOMER_CODE, 
+       customerCode: form.customerUid || DEFAULT_VALUES.CUSTOMER_CODE,
         assigneeId: form.assignee || DEFAULT_VALUES.ASSIGNEE_ID,       
         
         groupId: DEFAULT_VALUES.GROUP_ID,

@@ -1,4 +1,4 @@
-
+//api/auth.ts
 import { request } from '@/utils/request.js';
 import { SYSTEM_CONFIG } from '@/utils/enums';
 

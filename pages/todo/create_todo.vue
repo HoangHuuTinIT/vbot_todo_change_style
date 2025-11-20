@@ -1,7 +1,5 @@
 <template>
-    <view class="container">
-        
-        <view class="flat-item">
+    <view class="container"> <view class="flat-item">
             <view class="item-left">
                 <image src="https://img.icons8.com/ios/50/666666/edit--v1.png" class="item-icon"></image>
             </view>
@@ -10,11 +8,24 @@
 
         <TodoEditor v-model="form.desc" />
 
-        <view class="flat-item">
-            <view class="item-left"><image src="https://img.icons8.com/ios/50/666666/price-tag.png" class="item-icon"></image></view>
-            <input class="item-input" v-model="form.customer" placeholder="Khách hàng" />
+        <view class="flat-item" @click="openCustomerPopup">
+            <view class="item-left">
+                <image src="https://img.icons8.com/ios/50/666666/price-tag.png" class="item-icon"></image>
+            </view>
+            <view class="input-trigger" :class="{ 'placeholder': !form.customer }">
+                {{ form.customer || 'Chọn khách hàng' }}
+            </view>
+            <text class="arrow-icon">›</text>
         </view>
         
+        <CustomerModal 
+            :visible="showCustomerModal"
+            :loading="loadingCustomer"
+            :customers="customerList"
+            @close="showCustomerModal = false"
+            @select="onCustomerSelect"
+        />
+
         <view class="flat-item">
             <view class="item-left">
                 <image src="https://img.icons8.com/ios/50/666666/user.png" class="item-icon"></image>
@@ -52,16 +63,14 @@
     import { useCreateTodoController } from '@/controllers/create_todo';
     import TodoEditor from '@/components/Todo/TodoEditor.vue';
     import TodoDatePicker from '@/components/Todo/TodoDatePicker.vue';
+    import CustomerModal from '@/components/Todo/CustomerModal.vue'; // Import Modal
 
-    // Lấy thêm memberOptions, onMemberChange, currentAssigneeName từ controller
     const { 
-        loading, 
-        form, 
-        goBack, 
-        submitForm,
-        memberOptions,
-        onMemberChange,
-        currentAssigneeName
+        loading, form, goBack, submitForm,
+        memberOptions, onMemberChange, currentAssigneeName,
+        // Các biến customer
+        showCustomerModal, loadingCustomer, customerList, 
+        openCustomerPopup, onCustomerSelect
     } = useCreateTodoController();
 </script>
 
@@ -83,4 +92,10 @@
     .btn-cancel { width: 35%; background-color: #e5e5ea; color: #333; } 
     .btn-submit { width: 60%; background-color: #007aff; color: #fff; }
     .btn-submit[disabled] { background-color: #8dc2ff; }
+	
+	.input-trigger {
+	        flex: 1; font-size: 15px; color: #333;
+	    }
+	    .input-trigger.placeholder { color: #808080; }
+	    .arrow-icon { color: #ccc; font-size: 18px; margin-left: 5px; padding-bottom: 2px;}
 </style>
