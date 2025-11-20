@@ -3933,6 +3933,7 @@ This will fail in production if not fixed.`);
       sourceIndex: srcIndex,
       assigneeIndex: 0,
       // Tạm fix cứng vì chưa có API User
+      assigneeId: apiData.assigneeId || "",
       dueDate: timestampToDateStr(apiData.dueDate),
       notifyDate: timestampToDateStr(notiTimestamp),
       notifyTime: timestampToTimeStr(notiTimestamp)
@@ -3948,33 +3949,50 @@ This will fail in production if not fixed.`);
       statusIndex: 0,
       sourceIndex: 0,
       assigneeIndex: 0,
+      assigneeId: "",
       dueDate: "",
       notifyDate: "",
       notifyTime: ""
     });
     const statusOptions = ["Chưa xử lý", "Đang xử lý", "Hoàn thành"];
     const sourceOptions = ["Cuộc gọi", "Khách hàng", "Hội thoại", "Tin nhắn"];
-    const assigneeOptions = ["Nguyễn Văn A", "Trần Thị B"];
+    const memberList = vue.ref([]);
+    const assigneeOptions = vue.ref([]);
     onLoad(async (options) => {
+      await fetchMembers();
       if (options && options.id) {
         await fetchDetail(options.id);
       }
     });
+    const fetchMembers = async () => {
+      try {
+        const data = await getAllMembers();
+        memberList.value = data;
+        assigneeOptions.value = data.map((m) => m.UserName || "Thành viên ẩn danh");
+      } catch (e) {
+        formatAppLog("error", "at controllers/todo_detail.ts:41", "Lỗi lấy members", e);
+        assigneeOptions.value = ["Không tải được danh sách"];
+      }
+    };
     const fetchDetail = async (id) => {
       isLoading.value = true;
       try {
         const rawResponse = await getTodoDetail(id);
-        formatAppLog("log", "at controllers/todo_detail.ts:43", "🔍 API Response:", rawResponse);
         const realData = rawResponse && rawResponse.data && !rawResponse.id ? rawResponse.data : rawResponse;
-        formatAppLog("log", "at controllers/todo_detail.ts:53", "🎯 Real Data for Mapper:", realData);
         const mappedData = mapTodoDetailToForm(realData);
         if (mappedData) {
           form.value = mappedData;
-        } else {
-          uni.showToast({ title: "Dữ liệu trống", icon: "none" });
+          if (form.value.assigneeId && memberList.value.length > 0) {
+            const index = memberList.value.findIndex((m) => m.memberUID === form.value.assigneeId);
+            if (index !== -1) {
+              form.value.assigneeIndex = index;
+            } else {
+              form.value.assigneeIndex = -1;
+            }
+          }
         }
       } catch (error) {
-        formatAppLog("error", "at controllers/todo_detail.ts:65", "❌ Lỗi lấy chi tiết:", error);
+        formatAppLog("error", "at controllers/todo_detail.ts:75", "❌ Lỗi lấy chi tiết:", error);
         uni.showToast({ title: "Lỗi kết nối", icon: "none" });
       } finally {
         isLoading.value = false;
@@ -3987,14 +4005,18 @@ This will fail in production if not fixed.`);
       form.value.sourceIndex = e.detail.value;
     };
     const onAssigneeChange = (e) => {
-      form.value.assigneeIndex = e.detail.value;
+      const idx = e.detail.value;
+      form.value.assigneeIndex = idx;
+      if (memberList.value[idx]) {
+        form.value.assigneeId = memberList.value[idx].memberUID;
+      }
     };
     const goBack = () => {
       uni.navigateBack();
     };
     const saveTodo = () => {
-      formatAppLog("log", "at controllers/todo_detail.ts:75", "Lưu:", form.value);
-      uni.showToast({ title: "Đã lưu", icon: "success" });
+      formatAppLog("log", "at controllers/todo_detail.ts:100", "Lưu:", form.value);
+      uni.showToast({ title: "Đã lưu (Demo)", icon: "success" });
     };
     return {
       isLoading,
@@ -4002,6 +4024,7 @@ This will fail in production if not fixed.`);
       statusOptions,
       sourceOptions,
       assigneeOptions,
+      // [MỚI] Trả về options động
       onStatusChange,
       onSourceChange,
       onAssigneeChange,
@@ -4146,7 +4169,7 @@ This will fail in production if not fixed.`);
               vue.createElementVNode(
                 "view",
                 { class: "picker-text" },
-                vue.toDisplayString($setup.assigneeOptions[$setup.form.assigneeIndex]) + " ▾",
+                vue.toDisplayString($setup.form.assigneeIndex > -1 && $setup.assigneeOptions[$setup.form.assigneeIndex] ? $setup.assigneeOptions[$setup.form.assigneeIndex] : "Chọn người giao") + " ▾ ",
                 1
                 /* TEXT */
               )

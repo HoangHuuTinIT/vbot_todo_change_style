@@ -11,6 +11,7 @@ export interface TodoDetailForm {
     statusIndex: number;
     sourceIndex: number;
     assigneeIndex: number;
+	assigneeId: string;
     dueDate: string;     // YYYY-MM-DD
     notifyDate: string;  // YYYY-MM-DD
     notifyTime: string;  // HH:mm
@@ -68,7 +69,7 @@ export const mapTodoDetailToForm = (apiData: any): TodoDetailForm | null => {
         statusIndex: sIndex,
         sourceIndex: srcIndex,
         assigneeIndex: 0, // Tạm fix cứng vì chưa có API User
-
+		assigneeId: apiData.assigneeId || '',
         dueDate: timestampToDateStr(apiData.dueDate),
         notifyDate: timestampToDateStr(notiTimestamp),
         notifyTime: timestampToTimeStr(notiTimestamp)

@@ -44,14 +44,26 @@
                 </view>
 
                 <view class="flat-item">
-                    <view class="item-left">
-                        <image src="https://img.icons8.com/ios/50/666666/user.png" class="item-icon"></image>
-                        <text class="item-label">Người được giao</text>
+                        <view class="item-left">
+                            <image src="https://img.icons8.com/ios/50/666666/user.png" class="item-icon"></image>
+                            <text class="item-label">Người được giao</text>
+                        </view>
+                        
+                        <picker 
+                            mode="selector" 
+                            :range="assigneeOptions" 
+                            :value="form.assigneeIndex" 
+                            @change="onAssigneeChange" 
+                            class="item-picker-box"
+                        >
+                            <view class="picker-text">
+                                {{ (form.assigneeIndex > -1 && assigneeOptions[form.assigneeIndex]) 
+                                    ? assigneeOptions[form.assigneeIndex] 
+                                    : 'Chọn người giao' 
+                                }} ▾
+                            </view>
+                        </picker>
                     </view>
-                    <picker mode="selector" :range="assigneeOptions" :value="form.assigneeIndex" @change="onAssigneeChange" class="item-picker-box">
-                        <view class="picker-text">{{ assigneeOptions[form.assigneeIndex] }} ▾</view>
-                    </picker>
-                </view>
 
                 <TodoDatePicker 
                     v-model:dueDate="form.dueDate"
