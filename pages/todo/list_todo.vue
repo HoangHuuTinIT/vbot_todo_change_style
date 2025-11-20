@@ -20,7 +20,7 @@
 				</view>
 
 				<scroll-view v-else scroll-y="true" class="list-view">
-					<view v-for="(item, index) in todos" :key="item.id || index" class="card-item">
+					<view v-for="(item, index) in todos" :key="item.id || index" class="card-item" @click="goToDetail(item)">
 						<view class="status-bar" :class="item.statusClass"></view>
 						<view class="card-body">
 							<view class="card-row top-row">
@@ -188,7 +188,7 @@
 		sourceOptions, sourceIndex, onSourceChange,
 		// Actions
 		addNewTask, openFilter, closeFilter, resetFilter, applyFilter,
-		showActionMenu, cancelDelete, confirmDelete
+		showActionMenu, cancelDelete, confirmDelete,goToDetail
 	} = useListTodoController();
 </script>
 

@@ -8,7 +8,7 @@
             <view class="date-row">
                 <picker mode="date" :value="dueDate" @change="onDateChange($event, 'dueDate')" class="full-width-picker">
                     <view class="item-picker" :class="{ 'placeholder-color': !dueDate }">
-                        <text class="picker-label">Hết hạn:</text> {{ dueDate ? formatDateDisplay(dueDate) : 'Chọn ngày' }}
+                        <text class="picker-label">Hạn xử lý:</text> {{ dueDate ? formatDateDisplay(dueDate) : 'Chọn ngày' }}
                     </view>
                 </picker>
             </view>
@@ -18,7 +18,7 @@
             <view class="date-row split-row">
                 <picker mode="date" :value="notifyDate" @change="onDateChange($event, 'notifyDate')" class="half-picker">
                     <view class="item-picker" :class="{ 'placeholder-color': !notifyDate }">
-                        <text class="picker-label">Thông báo:</text> {{ notifyDate ? formatDateDisplay(notifyDate) : 'Ngày' }}
+                        <text class="picker-label">Ngày thông báo:</text> {{ notifyDate ? formatDateDisplay(notifyDate) : 'Ngày' }}
                     </view>
                 </picker>
 
@@ -76,7 +76,7 @@ const formatDateDisplay = (isoStr) => {
     .full-width-picker { width: 100%; }
     .item-picker { text-align: left; font-size: 15px; color: #333; width: 100%; display: flex; align-items: center; } 
     .placeholder-color { color: #808080; }
-    .picker-label { font-weight: bold; color: #666; margin-right: 6px; font-size: 14px; }
+    .picker-label { font-weight: bold; color: #666; margin-right: 6px; font-size: 14px;white-space: nowrap; }
     .inner-divider { height: 1px; background-color: #f0f0f0; margin: 10px 0; width: 100%; }
     
     .split-row { justify-content: space-between; }

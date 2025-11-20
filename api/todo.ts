@@ -70,3 +70,14 @@ export const deleteTodo = (id: string | number): Promise<any> => {
         data: { id: id }
     });
 };
+
+export const getTodoDetail = (id: string | number): Promise<any> => {
+    return request({
+        url: `${API_URL}/getDetail`,
+        method: 'GET',
+        data: {
+            id: id,
+            projectCode: PROJECT_CODE
+        }
+    });
+};

@@ -34,6 +34,7 @@ if (uni.restoreGlobal) {
   const ON_SHOW = "onShow";
   const ON_HIDE = "onHide";
   const ON_LAUNCH = "onLaunch";
+  const ON_LOAD = "onLoad";
   function formatAppLog(type, filename, ...args) {
     if (uni.__log__) {
       uni.__log__(type, filename, ...args);
@@ -58,6 +59,11 @@ if (uni.restoreGlobal) {
     ON_LAUNCH,
     1
     /* HookFlags.APP */
+  );
+  const onLoad = /* @__PURE__ */ createLifeCycleHook(
+    ON_LOAD,
+    2
+    /* HookFlags.PAGE */
   );
   var isVue2 = false;
   function set(target, key, val) {
@@ -2016,6 +2022,16 @@ This will fail in production if not fixed.`);
       data: { id }
     });
   };
+  const getTodoDetail = (id) => {
+    return request({
+      url: `${API_URL}/getDetail`,
+      method: "GET",
+      data: {
+        id,
+        projectCode: PROJECT_CODE
+      }
+    });
+  };
   const useListTodoController = () => {
     const todos = vue.ref([]);
     const isLoading = vue.ref(false);
@@ -2171,11 +2187,17 @@ This will fail in production if not fixed.`);
     onShow(() => {
       getTodoList();
     });
+    const goToDetail = (item) => {
+      uni.navigateTo({
+        url: `/pages/todo/todo_detail?id=${item.id}`
+      });
+    };
     return {
       todos,
       isLoading,
       isFilterOpen,
       filter,
+      goToDetail,
       isConfirmDeleteOpen,
       itemToDelete,
       pageSizeOptions,
@@ -2210,7 +2232,7 @@ This will fail in production if not fixed.`);
       confirmDelete
     };
   };
-  const _sfc_main$5 = /* @__PURE__ */ vue.defineComponent({
+  const _sfc_main$6 = /* @__PURE__ */ vue.defineComponent({
     __name: "list_todo",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -2252,9 +2274,10 @@ This will fail in production if not fixed.`);
         applyFilter,
         showActionMenu,
         cancelDelete,
-        confirmDelete
+        confirmDelete,
+        goToDetail
       } = useListTodoController();
-      const __returned__ = { todos, isLoading, isFilterOpen, filter, isConfirmDeleteOpen, itemToDelete, pageSizeOptions, pageSizeIndex, currentPage, totalPages, onPageSizeChange, changePage, statusOptions, statusIndex, onStatusChange, creatorOptions, creatorIndex, onCreatorChange, customerOptions, customerIndex, onCustomerChange, assigneeOptions, assigneeIndex, onAssigneeChange, sourceOptions, sourceIndex, onSourceChange, addNewTask, openFilter, closeFilter, resetFilter, applyFilter, showActionMenu, cancelDelete, confirmDelete };
+      const __returned__ = { todos, isLoading, isFilterOpen, filter, isConfirmDeleteOpen, itemToDelete, pageSizeOptions, pageSizeIndex, currentPage, totalPages, onPageSizeChange, changePage, statusOptions, statusIndex, onStatusChange, creatorOptions, creatorIndex, onCreatorChange, customerOptions, customerIndex, onCustomerChange, assigneeOptions, assigneeIndex, onAssigneeChange, sourceOptions, sourceIndex, onSourceChange, addNewTask, openFilter, closeFilter, resetFilter, applyFilter, showActionMenu, cancelDelete, confirmDelete, goToDetail };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
@@ -2266,7 +2289,7 @@ This will fail in production if not fixed.`);
     }
     return target;
   };
-  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
     var _a;
     return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
       vue.createElementVNode("view", { class: "header" }, [
@@ -2310,7 +2333,8 @@ This will fail in production if not fixed.`);
               vue.renderList($setup.todos, (item, index) => {
                 return vue.openBlock(), vue.createElementBlock("view", {
                   key: item.id || index,
-                  class: "card-item"
+                  class: "card-item",
+                  onClick: ($event) => $setup.goToDetail(item)
                 }, [
                   vue.createElementVNode(
                     "view",
@@ -2369,7 +2393,7 @@ This will fail in production if not fixed.`);
                       )
                     ])
                   ])
-                ]);
+                ], 8, ["onClick"]);
               }),
               128
               /* KEYED_FRAGMENT */
@@ -2689,7 +2713,37 @@ This will fail in production if not fixed.`);
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const PagesTodoListTodo = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-1b4e60ea"], ["__file", "D:/uni_app/vbot_todo_2/pages/todo/list_todo.vue"]]);
+  const PagesTodoListTodo = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-1b4e60ea"], ["__file", "D:/uni_app/vbot_todo_3/pages/todo/list_todo.vue"]]);
+  const getAllMembers = () => {
+    const authStore = useAuthStore();
+    const { rootToken, projectCode } = authStore;
+    return new Promise((resolve, reject) => {
+      uni.request({
+        url: "https://api-staging.vbot.vn/v1.0/api/project/getAllMember",
+        method: "GET",
+        data: {
+          projectCode,
+          status: "all"
+        },
+        header: {
+          // QUAN TRỌNG: Dùng Root Token như yêu cầu
+          "Authorization": `Bearer ${rootToken}`,
+          "Content-Type": "application/json"
+        },
+        success: (res) => {
+          const body = res.data;
+          if (body.status === 1 && body.data) {
+            resolve(body.data);
+          } else {
+            reject(body.message || "Lỗi lấy danh sách thành viên");
+          }
+        },
+        fail: (err) => {
+          reject(err);
+        }
+      });
+    });
+  };
   const dateToTimestamp = (dateStr) => {
     if (!dateStr)
       return -1;
@@ -2737,9 +2791,37 @@ This will fail in production if not fixed.`);
       desc: "",
       customer: "",
       assignee: "",
+      // Trường này sẽ chứa memberUID
       dueDate: getTodayISO(),
       notifyDate: getTodayISO(),
       notifyTime: getCurrentTime()
+    });
+    const memberList = vue.ref([]);
+    const memberOptions = vue.ref([]);
+    const selectedMemberIndex = vue.ref(-1);
+    const fetchMembers = async () => {
+      try {
+        const data = await getAllMembers();
+        memberList.value = data;
+        memberOptions.value = data.map((m) => m.UserName || "Thành viên ẩn danh");
+      } catch (error) {
+        formatAppLog("error", "at controllers/create_todo.ts:50", "Lỗi lấy thành viên:", error);
+        uni.showToast({ title: "Không thể tải danh sách thành viên", icon: "none" });
+      }
+    };
+    const onMemberChange = (e) => {
+      const index = e.detail.value;
+      selectedMemberIndex.value = index;
+      const selectedMember = memberList.value[index];
+      if (selectedMember) {
+        form.value.assignee = selectedMember.memberUID;
+      }
+    };
+    const currentAssigneeName = vue.computed(() => {
+      if (selectedMemberIndex.value > -1 && memberOptions.value.length > 0) {
+        return memberOptions.value[selectedMemberIndex.value];
+      }
+      return "";
     });
     const goBack = () => uni.navigateBack();
     const submitForm = async () => {
@@ -2759,21 +2841,28 @@ This will fail in production if not fixed.`);
           uni.navigateBack();
         }, 1500);
       } catch (error) {
-        formatAppLog("error", "at controllers/create_todo.ts:58", "❌ Create Error:", error);
+        formatAppLog("error", "at controllers/create_todo.ts:98", "❌ Create Error:", error);
         const errorMsg = (error == null ? void 0 : error.message) || "Thất bại";
         uni.showToast({ title: "Lỗi: " + errorMsg, icon: "none" });
       } finally {
         loading.value = false;
       }
     };
+    vue.onMounted(() => {
+      fetchMembers();
+    });
     return {
       loading,
       form,
       goBack,
-      submitForm
+      submitForm,
+      // Return thêm các biến mới để View dùng
+      memberOptions,
+      onMemberChange,
+      currentAssigneeName
     };
   };
-  const _sfc_main$4 = /* @__PURE__ */ vue.defineComponent({
+  const _sfc_main$5 = /* @__PURE__ */ vue.defineComponent({
     __name: "TodoEditor",
     props: {
       modelValue: { type: String, required: true }
@@ -2786,6 +2875,7 @@ This will fail in production if not fixed.`);
       const editorCtx = vue.ref(null);
       const formats = vue.ref({});
       const instance = vue.getCurrentInstance();
+      const isTyping = vue.ref(false);
       const showLinkPopup = vue.ref(false);
       const linkUrl = vue.ref("");
       const linkText = vue.ref("");
@@ -2809,6 +2899,11 @@ This will fail in production if not fixed.`);
           }
         }).exec();
       };
+      vue.watch(() => props.modelValue, (newVal) => {
+        if (editorCtx.value && newVal) {
+          editorCtx.value.setContents({ html: newVal });
+        }
+      });
       const onEditorInput = (e) => {
         emit("update:modelValue", e.detail.html);
       };
@@ -2917,12 +3012,12 @@ This will fail in production if not fixed.`);
       const insertVideo = () => {
         uni.chooseVideo({ count: 1, success: (r) => editorCtx.value.insertVideo({ src: r.tempFilePath, width: "80%" }) });
       };
-      const __returned__ = { props, emit, editorCtx, formats, instance, showLinkPopup, linkUrl, linkText, canInsertLink, isLinkSelected, focusLinkInput, showColorPopup, colorType, currentColor, currentBgColor, currentHeader, colorList, headerOptions, alignIcon, isPopupOpen, onEditorReady, onEditorInput, onStatusChange, format, handleLinkBtn, closeLinkPopup, confirmLink, removeLink, onHeaderChange, toggleAlign, openColorPicker, closeColorPopup, selectColor, insertImage, insertVideo };
+      const __returned__ = { props, emit, editorCtx, formats, instance, isTyping, showLinkPopup, linkUrl, linkText, canInsertLink, isLinkSelected, focusLinkInput, showColorPopup, colorType, currentColor, currentBgColor, currentHeader, colorList, headerOptions, alignIcon, isPopupOpen, onEditorReady, onEditorInput, onStatusChange, format, handleLinkBtn, closeLinkPopup, confirmLink, removeLink, onHeaderChange, toggleAlign, openColorPicker, closeColorPopup, selectColor, insertImage, insertVideo };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
   });
-  function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "editor-wrapper" }, [
       vue.createElementVNode("view", { class: "editor-label-row" }, [
         vue.createElementVNode("view", { class: "item-left" }, [
@@ -2939,69 +3034,81 @@ This will fail in production if not fixed.`);
             "view",
             {
               class: vue.normalizeClass(["tool-item", { "active": $setup.formats.bold }]),
-              onClick: _cache[0] || (_cache[0] = ($event) => $setup.format("bold"))
+              onTouchend: _cache[0] || (_cache[0] = vue.withModifiers(($event) => $setup.format("bold"), ["prevent"]))
             },
             [
               vue.createElementVNode("text", { class: "txt-icon bold" }, "B")
             ],
-            2
-            /* CLASS */
+            34
+            /* CLASS, NEED_HYDRATION */
           ),
           vue.createElementVNode(
             "view",
             {
               class: vue.normalizeClass(["tool-item", { "active": $setup.formats.italic }]),
-              onClick: _cache[1] || (_cache[1] = ($event) => $setup.format("italic"))
+              onTouchend: _cache[1] || (_cache[1] = vue.withModifiers(($event) => $setup.format("italic"), ["prevent"]))
             },
             [
               vue.createElementVNode("text", { class: "txt-icon italic" }, "I")
             ],
-            2
-            /* CLASS */
+            34
+            /* CLASS, NEED_HYDRATION */
           ),
           vue.createElementVNode(
             "view",
             {
               class: vue.normalizeClass(["tool-item", { "active": $setup.formats.underline }]),
-              onClick: _cache[2] || (_cache[2] = ($event) => $setup.format("underline"))
+              onTouchend: _cache[2] || (_cache[2] = vue.withModifiers(($event) => $setup.format("underline"), ["prevent"]))
             },
             [
               vue.createElementVNode("text", { class: "txt-icon underline" }, "U")
             ],
-            2
-            /* CLASS */
+            34
+            /* CLASS, NEED_HYDRATION */
           ),
           vue.createElementVNode(
             "view",
             {
               class: vue.normalizeClass(["tool-item", { "active": $setup.formats.strike }]),
-              onClick: _cache[3] || (_cache[3] = ($event) => $setup.format("strike"))
+              onTouchend: _cache[3] || (_cache[3] = vue.withModifiers(($event) => $setup.format("strike"), ["prevent"]))
             },
             [
               vue.createElementVNode("text", { class: "txt-icon strike" }, "S")
             ],
-            2
-            /* CLASS */
+            34
+            /* CLASS, NEED_HYDRATION */
           ),
           vue.createElementVNode("view", { class: "tool-divider" }),
-          vue.createElementVNode("view", {
-            class: "tool-item",
-            onClick: _cache[4] || (_cache[4] = ($event) => $setup.format("list", "ordered"))
-          }, [
-            vue.createElementVNode("image", {
-              src: "https://img.icons8.com/ios/50/666666/numbered-list.png",
-              class: "img-tool"
-            })
-          ]),
-          vue.createElementVNode("view", {
-            class: "tool-item",
-            onClick: _cache[5] || (_cache[5] = ($event) => $setup.format("list", "bullet"))
-          }, [
-            vue.createElementVNode("image", {
-              src: "https://img.icons8.com/ios/50/666666/list.png",
-              class: "img-tool"
-            })
-          ]),
+          vue.createElementVNode(
+            "view",
+            {
+              class: "tool-item",
+              onTouchend: _cache[4] || (_cache[4] = vue.withModifiers(($event) => $setup.format("list", "ordered"), ["prevent"]))
+            },
+            [
+              vue.createElementVNode("image", {
+                src: "https://img.icons8.com/ios/50/666666/numbered-list.png",
+                class: "img-tool"
+              })
+            ],
+            32
+            /* NEED_HYDRATION */
+          ),
+          vue.createElementVNode(
+            "view",
+            {
+              class: "tool-item",
+              onTouchend: _cache[5] || (_cache[5] = vue.withModifiers(($event) => $setup.format("list", "bullet"), ["prevent"]))
+            },
+            [
+              vue.createElementVNode("image", {
+                src: "https://img.icons8.com/ios/50/666666/list.png",
+                class: "img-tool"
+              })
+            ],
+            32
+            /* NEED_HYDRATION */
+          ),
           vue.createElementVNode(
             "picker",
             {
@@ -3065,15 +3172,21 @@ This will fail in production if not fixed.`);
             )
           ]),
           vue.createElementVNode("view", { class: "tool-divider" }),
-          vue.createElementVNode("view", {
-            class: "tool-item",
-            onClick: $setup.toggleAlign
-          }, [
-            vue.createElementVNode("image", {
-              src: $setup.alignIcon,
-              class: "img-tool"
-            }, null, 8, ["src"])
-          ]),
+          vue.createElementVNode(
+            "view",
+            {
+              class: "tool-item",
+              onTouchend: vue.withModifiers($setup.toggleAlign, ["prevent"])
+            },
+            [
+              vue.createElementVNode("image", {
+                src: $setup.alignIcon,
+                class: "img-tool"
+              }, null, 8, ["src"])
+            ],
+            32
+            /* NEED_HYDRATION */
+          ),
           vue.createElementVNode("view", { class: "tool-divider" }),
           vue.createElementVNode(
             "view",
@@ -3244,8 +3357,8 @@ This will fail in production if not fixed.`);
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const TodoEditor = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-7d79903f"], ["__file", "D:/uni_app/vbot_todo_2/components/Todo/TodoEditor.vue"]]);
-  const _sfc_main$3 = /* @__PURE__ */ vue.defineComponent({
+  const TodoEditor = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-7d79903f"], ["__file", "D:/uni_app/vbot_todo_3/components/Todo/TodoEditor.vue"]]);
+  const _sfc_main$4 = /* @__PURE__ */ vue.defineComponent({
     __name: "TodoDatePicker",
     props: {
       dueDate: { type: String, required: true },
@@ -3278,7 +3391,7 @@ This will fail in production if not fixed.`);
       return __returned__;
     }
   });
-  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "flat-item date-compound-block" }, [
       vue.createElementVNode("view", { class: "item-left icon-top-aligned" }, [
         vue.createElementVNode("image", {
@@ -3300,7 +3413,7 @@ This will fail in production if not fixed.`);
                 class: vue.normalizeClass(["item-picker", { "placeholder-color": !$props.dueDate }])
               },
               [
-                vue.createElementVNode("text", { class: "picker-label" }, "Hết hạn:"),
+                vue.createElementVNode("text", { class: "picker-label" }, "Hạn xử lý:"),
                 vue.createTextVNode(
                   " " + vue.toDisplayString($props.dueDate ? $setup.formatDateDisplay($props.dueDate) : "Chọn ngày"),
                   1
@@ -3326,7 +3439,7 @@ This will fail in production if not fixed.`);
                 class: vue.normalizeClass(["item-picker", { "placeholder-color": !$props.notifyDate }])
               },
               [
-                vue.createElementVNode("text", { class: "picker-label" }, "Thông báo:"),
+                vue.createElementVNode("text", { class: "picker-label" }, "Ngày thông báo:"),
                 vue.createTextVNode(
                   " " + vue.toDisplayString($props.notifyDate ? $setup.formatDateDisplay($props.notifyDate) : "Ngày"),
                   1
@@ -3358,18 +3471,26 @@ This will fail in production if not fixed.`);
       ])
     ]);
   }
-  const TodoDatePicker = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-245edb6a"], ["__file", "D:/uni_app/vbot_todo_2/components/Todo/TodoDatePicker.vue"]]);
-  const _sfc_main$2 = /* @__PURE__ */ vue.defineComponent({
+  const TodoDatePicker = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-245edb6a"], ["__file", "D:/uni_app/vbot_todo_3/components/Todo/TodoDatePicker.vue"]]);
+  const _sfc_main$3 = /* @__PURE__ */ vue.defineComponent({
     __name: "create_todo",
     setup(__props, { expose: __expose }) {
       __expose();
-      const { loading, form, goBack, submitForm } = useCreateTodoController();
-      const __returned__ = { loading, form, goBack, submitForm, TodoEditor, TodoDatePicker };
+      const {
+        loading,
+        form,
+        goBack,
+        submitForm,
+        memberOptions,
+        onMemberChange,
+        currentAssigneeName
+      } = useCreateTodoController();
+      const __returned__ = { loading, form, goBack, submitForm, memberOptions, onMemberChange, currentAssigneeName, TodoEditor, TodoDatePicker };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
   });
-  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
       vue.createElementVNode("view", { class: "flat-item" }, [
         vue.createElementVNode("view", { class: "item-left" }, [
@@ -3383,7 +3504,8 @@ This will fail in production if not fixed.`);
           {
             class: "item-input",
             "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.form.name = $event),
-            placeholder: "Nhập tên công việc *"
+            placeholder: "Nhập tên công việc *",
+            maxlength: "29"
           },
           null,
           512
@@ -3408,7 +3530,7 @@ This will fail in production if not fixed.`);
           {
             class: "item-input",
             "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $setup.form.customer = $event),
-            placeholder: "Mã khách hàng"
+            placeholder: "Khách hàng"
           },
           null,
           512
@@ -3424,19 +3546,22 @@ This will fail in production if not fixed.`);
             class: "item-icon"
           })
         ]),
-        vue.withDirectives(vue.createElementVNode(
-          "input",
-          {
-            class: "item-input",
-            "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => $setup.form.assignee = $event),
-            placeholder: "ID người nhận"
-          },
-          null,
-          512
-          /* NEED_PATCH */
-        ), [
-          [vue.vModelText, $setup.form.assignee]
-        ])
+        vue.createElementVNode("picker", {
+          mode: "selector",
+          range: $setup.memberOptions,
+          onChange: _cache[3] || (_cache[3] = (...args) => $setup.onMemberChange && $setup.onMemberChange(...args)),
+          class: "full-width-picker"
+        }, [
+          vue.createElementVNode(
+            "view",
+            {
+              class: vue.normalizeClass(["picker-display", { "placeholder-color": !$setup.currentAssigneeName }])
+            },
+            vue.toDisplayString($setup.currentAssigneeName ? $setup.currentAssigneeName : "Người được giao"),
+            3
+            /* TEXT, CLASS */
+          )
+        ], 40, ["range"])
       ]),
       vue.createVNode($setup["TodoDatePicker"], {
         dueDate: $setup.form.dueDate,
@@ -3459,9 +3584,9 @@ This will fail in production if not fixed.`);
       ])
     ]);
   }
-  const PagesTodoCreateTodo = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__file", "D:/uni_app/vbot_todo_2/pages/todo/create_todo.vue"]]);
+  const PagesTodoCreateTodo = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__file", "D:/uni_app/vbot_todo_3/pages/todo/create_todo.vue"]]);
   const _imports_0 = "/static/logo.png";
-  const _sfc_main$1 = {
+  const _sfc_main$2 = {
     data() {
       return {
         title: "Hello"
@@ -3471,7 +3596,7 @@ This will fail in production if not fixed.`);
     },
     methods: {}
   };
-  function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "content" }, [
       vue.createElementVNode("image", {
         class: "logo",
@@ -3488,10 +3613,295 @@ This will fail in production if not fixed.`);
       ])
     ]);
   }
-  const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__file", "D:/uni_app/vbot_todo_2/pages/index/index.vue"]]);
+  const PagesIndexIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__file", "D:/uni_app/vbot_todo_3/pages/index/index.vue"]]);
+  const timestampToDateStr = (ts) => {
+    if (!ts || ts <= 0)
+      return "";
+    try {
+      const date = new Date(ts);
+      const y = date.getFullYear();
+      const m = (date.getMonth() + 1).toString().padStart(2, "0");
+      const d = date.getDate().toString().padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    } catch {
+      return "";
+    }
+  };
+  const timestampToTimeStr = (ts) => {
+    if (!ts || ts <= 0)
+      return "";
+    try {
+      const date = new Date(ts);
+      const h = date.getHours().toString().padStart(2, "0");
+      const min = date.getMinutes().toString().padStart(2, "0");
+      return `${h}:${min}`;
+    } catch {
+      return "";
+    }
+  };
+  const mapTodoDetailToForm = (apiData) => {
+    if (!apiData)
+      return null;
+    const statusMap = [TODO_STATUS.NEW, TODO_STATUS.IN_PROGRESS, TODO_STATUS.DONE];
+    let sIndex = statusMap.indexOf(apiData.status);
+    if (sIndex === -1)
+      sIndex = 0;
+    const sourceMap = [TODO_SOURCE.CALL, TODO_SOURCE.CUSTOMER, TODO_SOURCE.CONVERSATION, TODO_SOURCE.CHAT_MESSAGE];
+    let srcIndex = sourceMap.indexOf(apiData.links);
+    if (srcIndex === -1)
+      srcIndex = 0;
+    const notiTimestamp = apiData.notificationReceivedAt || 0;
+    return {
+      id: apiData.id,
+      title: apiData.title || "",
+      code: apiData.code || "",
+      desc: apiData.description || "",
+      // HTML từ API
+      statusIndex: sIndex,
+      sourceIndex: srcIndex,
+      assigneeIndex: 0,
+      // Tạm fix cứng vì chưa có API User
+      dueDate: timestampToDateStr(apiData.dueDate),
+      notifyDate: timestampToDateStr(notiTimestamp),
+      notifyTime: timestampToTimeStr(notiTimestamp)
+    };
+  };
+  const useTodoDetailController = () => {
+    const isLoading = vue.ref(false);
+    const form = vue.ref({
+      id: "",
+      title: "",
+      code: "Loading...",
+      desc: "",
+      statusIndex: 0,
+      sourceIndex: 0,
+      assigneeIndex: 0,
+      dueDate: "",
+      notifyDate: "",
+      notifyTime: ""
+    });
+    const statusOptions = ["Chưa xử lý", "Đang xử lý", "Hoàn thành"];
+    const sourceOptions = ["Cuộc gọi", "Khách hàng", "Hội thoại", "Tin nhắn"];
+    const assigneeOptions = ["Nguyễn Văn A", "Trần Thị B"];
+    onLoad(async (options) => {
+      if (options && options.id) {
+        await fetchDetail(options.id);
+      }
+    });
+    const fetchDetail = async (id) => {
+      isLoading.value = true;
+      try {
+        const rawResponse = await getTodoDetail(id);
+        formatAppLog("log", "at controllers/todo_detail.ts:43", "🔍 API Response:", rawResponse);
+        const realData = rawResponse && rawResponse.data && !rawResponse.id ? rawResponse.data : rawResponse;
+        formatAppLog("log", "at controllers/todo_detail.ts:53", "🎯 Real Data for Mapper:", realData);
+        const mappedData = mapTodoDetailToForm(realData);
+        if (mappedData) {
+          form.value = mappedData;
+        } else {
+          uni.showToast({ title: "Dữ liệu trống", icon: "none" });
+        }
+      } catch (error) {
+        formatAppLog("error", "at controllers/todo_detail.ts:65", "❌ Lỗi lấy chi tiết:", error);
+        uni.showToast({ title: "Lỗi kết nối", icon: "none" });
+      } finally {
+        isLoading.value = false;
+      }
+    };
+    const onStatusChange = (e) => {
+      form.value.statusIndex = e.detail.value;
+    };
+    const onSourceChange = (e) => {
+      form.value.sourceIndex = e.detail.value;
+    };
+    const onAssigneeChange = (e) => {
+      form.value.assigneeIndex = e.detail.value;
+    };
+    const goBack = () => {
+      uni.navigateBack();
+    };
+    const saveTodo = () => {
+      formatAppLog("log", "at controllers/todo_detail.ts:75", "Lưu:", form.value);
+      uni.showToast({ title: "Đã lưu", icon: "success" });
+    };
+    return {
+      isLoading,
+      form,
+      statusOptions,
+      sourceOptions,
+      assigneeOptions,
+      onStatusChange,
+      onSourceChange,
+      onAssigneeChange,
+      goBack,
+      saveTodo
+    };
+  };
+  const _sfc_main$1 = /* @__PURE__ */ vue.defineComponent({
+    __name: "todo_detail",
+    setup(__props, { expose: __expose }) {
+      __expose();
+      const {
+        isLoading,
+        // Lấy thêm isLoading
+        form,
+        statusOptions,
+        sourceOptions,
+        assigneeOptions,
+        onStatusChange,
+        onSourceChange,
+        onAssigneeChange,
+        saveTodo
+      } = useTodoDetailController();
+      const __returned__ = { isLoading, form, statusOptions, sourceOptions, assigneeOptions, onStatusChange, onSourceChange, onAssigneeChange, saveTodo, TodoEditor, TodoDatePicker };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  });
+  function _sfc_render(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
+      $setup.isLoading ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "loading-overlay"
+      }, [
+        vue.createElementVNode("text", null, "Đang tải...")
+      ])) : vue.createCommentVNode("v-if", true),
+      vue.createElementVNode("view", { class: "detail-header" }, [
+        vue.createElementVNode("view", { class: "header-top" }, [
+          vue.createElementVNode(
+            "text",
+            { class: "header-code" },
+            "#" + vue.toDisplayString($setup.form.code),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode("view", { class: "header-actions" }, [
+            vue.createElementVNode("text", {
+              class: "btn-text",
+              onClick: _cache[0] || (_cache[0] = (...args) => $setup.saveTodo && $setup.saveTodo(...args))
+            }, "Lưu")
+          ])
+        ]),
+        vue.withDirectives(vue.createElementVNode(
+          "input",
+          {
+            class: "header-title-input",
+            "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.form.title = $event),
+            placeholder: "Tên công việc"
+          },
+          null,
+          512
+          /* NEED_PATCH */
+        ), [
+          [vue.vModelText, $setup.form.title]
+        ])
+      ]),
+      vue.createElementVNode("scroll-view", {
+        "scroll-y": "true",
+        class: "detail-body"
+      }, [
+        vue.createElementVNode("view", { class: "section-block" }, [
+          vue.createVNode($setup["TodoEditor"], {
+            modelValue: $setup.form.desc,
+            "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $setup.form.desc = $event)
+          }, null, 8, ["modelValue"])
+        ]),
+        vue.createElementVNode("view", { class: "section-title" }, "Thông tin công việc"),
+        vue.createElementVNode("view", { class: "info-group" }, [
+          vue.createElementVNode("view", { class: "flat-item" }, [
+            vue.createElementVNode("view", { class: "item-left" }, [
+              vue.createElementVNode("image", {
+                src: "https://img.icons8.com/ios/50/666666/checked-checkbox.png",
+                class: "item-icon"
+              }),
+              vue.createElementVNode("text", { class: "item-label" }, "Trạng thái")
+            ]),
+            vue.createElementVNode("picker", {
+              mode: "selector",
+              range: $setup.statusOptions,
+              value: $setup.form.statusIndex,
+              onChange: _cache[3] || (_cache[3] = (...args) => $setup.onStatusChange && $setup.onStatusChange(...args)),
+              class: "item-picker-box"
+            }, [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-text" },
+                vue.toDisplayString($setup.statusOptions[$setup.form.statusIndex]) + " ▾",
+                1
+                /* TEXT */
+              )
+            ], 40, ["range", "value"])
+          ]),
+          vue.createElementVNode("view", { class: "flat-item" }, [
+            vue.createElementVNode("view", { class: "item-left" }, [
+              vue.createElementVNode("image", {
+                src: "https://img.icons8.com/ios/50/666666/internet.png",
+                class: "item-icon"
+              }),
+              vue.createElementVNode("text", { class: "item-label" }, "Nguồn")
+            ]),
+            vue.createElementVNode("picker", {
+              mode: "selector",
+              range: $setup.sourceOptions,
+              value: $setup.form.sourceIndex,
+              onChange: _cache[4] || (_cache[4] = (...args) => $setup.onSourceChange && $setup.onSourceChange(...args)),
+              class: "item-picker-box"
+            }, [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-text" },
+                vue.toDisplayString($setup.sourceOptions[$setup.form.sourceIndex] || "Chọn nguồn") + " ▾",
+                1
+                /* TEXT */
+              )
+            ], 40, ["range", "value"])
+          ]),
+          vue.createElementVNode("view", { class: "flat-item" }, [
+            vue.createElementVNode("view", { class: "item-left" }, [
+              vue.createElementVNode("image", {
+                src: "https://img.icons8.com/ios/50/666666/user.png",
+                class: "item-icon"
+              }),
+              vue.createElementVNode("text", { class: "item-label" }, "Người được giao")
+            ]),
+            vue.createElementVNode("picker", {
+              mode: "selector",
+              range: $setup.assigneeOptions,
+              value: $setup.form.assigneeIndex,
+              onChange: _cache[5] || (_cache[5] = (...args) => $setup.onAssigneeChange && $setup.onAssigneeChange(...args)),
+              class: "item-picker-box"
+            }, [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-text" },
+                vue.toDisplayString($setup.assigneeOptions[$setup.form.assigneeIndex]) + " ▾",
+                1
+                /* TEXT */
+              )
+            ], 40, ["range", "value"])
+          ]),
+          vue.createVNode($setup["TodoDatePicker"], {
+            dueDate: $setup.form.dueDate,
+            "onUpdate:dueDate": _cache[6] || (_cache[6] = ($event) => $setup.form.dueDate = $event),
+            notifyDate: $setup.form.notifyDate,
+            "onUpdate:notifyDate": _cache[7] || (_cache[7] = ($event) => $setup.form.notifyDate = $event),
+            notifyTime: $setup.form.notifyTime,
+            "onUpdate:notifyTime": _cache[8] || (_cache[8] = ($event) => $setup.form.notifyTime = $event)
+          }, null, 8, ["dueDate", "notifyDate", "notifyTime"])
+        ]),
+        vue.createElementVNode("view", { class: "section-title" }, "Thông tin khách hàng"),
+        vue.createElementVNode("view", { class: "info-group customer-block" }, [
+          vue.createElementVNode("text", { style: { "color": "#999", "font-size": "14px", "padding": "15px", "display": "block" } }, " (Chưa có thông tin - API chưa hỗ trợ) ")
+        ]),
+        vue.createElementVNode("view", { style: { "height": "50px" } })
+      ])
+    ]);
+  }
+  const PagesTodoTodoDetail = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__scopeId", "data-v-9f96c8fe"], ["__file", "D:/uni_app/vbot_todo_3/pages/todo/todo_detail.vue"]]);
   __definePage("pages/todo/list_todo", PagesTodoListTodo);
   __definePage("pages/todo/create_todo", PagesTodoCreateTodo);
   __definePage("pages/index/index", PagesIndexIndex);
+  __definePage("pages/todo/todo_detail", PagesTodoTodoDetail);
   const _sfc_main = /* @__PURE__ */ vue.defineComponent({
     __name: "App",
     setup(__props, { expose: __expose }) {
@@ -3520,7 +3930,7 @@ This will fail in production if not fixed.`);
       return __returned__;
     }
   });
-  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "D:/uni_app/vbot_todo_2/App.vue"]]);
+  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "D:/uni_app/vbot_todo_3/App.vue"]]);
   function createApp() {
     const app = vue.createVueApp(App);
     app.use(createPinia());

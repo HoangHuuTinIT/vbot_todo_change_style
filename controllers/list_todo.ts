@@ -161,9 +161,14 @@ export const useListTodoController = () => {
     };
 
     onShow(() => { getTodoList(); });
-
+const goToDetail = (item: TodoItem) => {
+    // Truyền ID qua query param
+    uni.navigateTo({
+        url: `/pages/todo/todo_detail?id=${item.id}`
+    });
+};
     return {
-        todos, isLoading, isFilterOpen, filter,
+        todos, isLoading, isFilterOpen, filter,goToDetail,
         isConfirmDeleteOpen, itemToDelete,
         pageSizeOptions, pageSizeIndex, currentPage, totalPages, totalItems, onPageSizeChange, changePage,
         statusOptions, statusIndex, onStatusChange,

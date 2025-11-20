@@ -9,24 +9,66 @@
 
         <view class="toolbar">
             <view class="tool-row">
-                <view class="tool-item" @click="format('bold')" :class="{ 'active': formats.bold }"><text class="txt-icon bold">B</text></view>
-                <view class="tool-item" @click="format('italic')" :class="{ 'active': formats.italic }"><text class="txt-icon italic">I</text></view>
-                <view class="tool-item" @click="format('underline')" :class="{ 'active': formats.underline }"><text class="txt-icon underline">U</text></view>
-                <view class="tool-item" @click="format('strike')" :class="{ 'active': formats.strike }"><text class="txt-icon strike">S</text></view>
+                <view class="tool-item" @touchend.prevent="format('bold')" :class="{ 'active': formats.bold }">
+                    <text class="txt-icon bold">B</text>
+                </view>
+                
+                <view class="tool-item" @touchend.prevent="format('italic')" :class="{ 'active': formats.italic }">
+                    <text class="txt-icon italic">I</text>
+                </view>
+                
+                <view class="tool-item" @touchend.prevent="format('underline')" :class="{ 'active': formats.underline }">
+                    <text class="txt-icon underline">U</text>
+                </view>
+                
+                <view class="tool-item" @touchend.prevent="format('strike')" :class="{ 'active': formats.strike }">
+                    <text class="txt-icon strike">S</text>
+                </view>
+                
                 <view class="tool-divider"></view>
-                <view class="tool-item" @click="format('list', 'ordered')"><image src="https://img.icons8.com/ios/50/666666/numbered-list.png" class="img-tool"></image></view>
-                <view class="tool-item" @click="format('list', 'bullet')"><image src="https://img.icons8.com/ios/50/666666/list.png" class="img-tool"></image></view>
-                <picker :range="headerOptions" range-key="label" @change="onHeaderChange" class="tool-picker"><view class="picker-label">{{ currentHeader }} ▾</view></picker>
+                
+                <view class="tool-item" @touchend.prevent="format('list', 'ordered')">
+                    <image src="https://img.icons8.com/ios/50/666666/numbered-list.png" class="img-tool"></image>
+                </view>
+                
+                <view class="tool-item" @touchend.prevent="format('list', 'bullet')">
+                    <image src="https://img.icons8.com/ios/50/666666/list.png" class="img-tool"></image>
+                </view>
+                
+                <picker :range="headerOptions" range-key="label" @change="onHeaderChange" class="tool-picker">
+                    <view class="picker-label">{{ currentHeader }} ▾</view>
+                </picker>
             </view>
+            
             <view class="tool-row">
-                <view class="tool-item" @click="openColorPicker('color')"><text class="txt-icon color-text" :style="{ color: currentColor }">A</text><view class="color-bar" :style="{ backgroundColor: currentColor }"></view></view>
-                <view class="tool-item" @click="openColorPicker('backgroundColor')"><text class="txt-icon bg-text" :style="{ backgroundColor: currentBgColor }">A</text></view>
+                <view class="tool-item" @click="openColorPicker('color')">
+                    <text class="txt-icon color-text" :style="{ color: currentColor }">A</text>
+                    <view class="color-bar" :style="{ backgroundColor: currentColor }"></view>
+                </view>
+                
+                <view class="tool-item" @click="openColorPicker('backgroundColor')">
+                    <text class="txt-icon bg-text" :style="{ backgroundColor: currentBgColor }">A</text>
+                </view>
+                
                 <view class="tool-divider"></view>
-                <view class="tool-item" @click="toggleAlign"><image :src="alignIcon" class="img-tool"></image></view>
+                
+                <view class="tool-item" @touchend.prevent="toggleAlign">
+                    <image :src="alignIcon" class="img-tool"></image>
+                </view>
+                
                 <view class="tool-divider"></view>
-                <view class="tool-item" @click="handleLinkBtn" :class="{ 'active': isLinkSelected, 'disabled': !canInsertLink && !isLinkSelected }"><image src="https://img.icons8.com/ios/50/666666/link--v1.png" class="img-tool" :style="{ opacity: (canInsertLink || isLinkSelected) ? 1 : 0.3 }"></image></view>
-                <view class="tool-item" @click="insertImage"><image src="https://img.icons8.com/ios/50/666666/image.png" class="img-tool"></image></view>
-                <view class="tool-item" @click="insertVideo"><image src="https://img.icons8.com/ios/50/666666/video-call.png" class="img-tool"></image></view>
+                
+                <view class="tool-item" @click="handleLinkBtn" :class="{ 'active': isLinkSelected, 'disabled': !canInsertLink && !isLinkSelected }">
+                    <image src="https://img.icons8.com/ios/50/666666/link--v1.png" class="img-tool" :style="{ opacity: (canInsertLink || isLinkSelected) ? 1 : 0.3 }"></image>
+                </view>
+                
+                <view class="tool-item" @click="insertImage">
+                    <image src="https://img.icons8.com/ios/50/666666/image.png" class="img-tool"></image>
+                </view>
+                
+                <view class="tool-item" @click="insertVideo">
+                    <image src="https://img.icons8.com/ios/50/666666/video-call.png" class="img-tool"></image>
+                </view>
             </view>
         </view>
 
@@ -48,7 +90,7 @@
         </editor>
 
         <view class="color-popup-overlay" v-if="showColorPopup" @click="closeColorPopup">
-            <view class="color-popup" @click.stop>
+             <view class="color-popup" @click.stop>
                 <text class="popup-title">Chọn màu</text>
                 <view class="color-grid">
                     <view v-for="c in colorList" :key="c" class="color-cell" :style="{ backgroundColor: c }" @click="selectColor(c)"></view>
@@ -79,7 +121,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, getCurrentInstance } from 'vue';
+import { ref, computed, nextTick, getCurrentInstance ,watch} from 'vue';
 import { EDITOR_CONFIG } from '@/utils/enums'; // Import Enum đã tạo
 interface EditorProps {
     modelValue: string; // V-model luôn là string
@@ -91,7 +133,7 @@ const emit = defineEmits(['update:modelValue']);
 const editorCtx = ref(null);
 const formats = ref({});
 const instance = getCurrentInstance(); // Để dùng selectorQuery trong component
-
+const isTyping = ref(false);
 // Popup State
 const showLinkPopup = ref(false);
 const linkUrl = ref('');
@@ -124,7 +166,12 @@ const onEditorReady = () => {
         }
     }).exec();
 };
-
+watch(() => props.modelValue, (newVal) => {
+    if (editorCtx.value && newVal) {
+        // Cập nhật lại nội dung editor khi có dữ liệu mới
+        editorCtx.value.setContents({ html: newVal });
+    }
+});
 const onEditorInput = (e) => {
     // Emit giá trị ra ngoài cho cha (v-model)
     emit('update:modelValue', e.detail.html);
