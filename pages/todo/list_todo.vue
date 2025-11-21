@@ -103,7 +103,7 @@
 					</view>
 
 					<view class="f-group">
-						<text class="f-label">Người giao</text>
+						<text class="f-label">Người được giao</text>
 						<picker mode="selector" :range="assigneeOptions" :value="assigneeIndex" @change="onAssigneeChange">
 							<view class="f-picker">{{ assigneeOptions[assigneeIndex] }}<text class="arrow">▼</text></view>
 						</picker>

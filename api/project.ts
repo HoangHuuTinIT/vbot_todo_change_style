@@ -1,6 +1,6 @@
 // api/project.ts
 import { useAuthStore } from '@/stores/auth';
-
+import { PROJECT_API_URL } from '@/utils/config';
 interface ProjectMember {
     UserName: string;
     memberUID: string;
@@ -14,7 +14,7 @@ export const getAllMembers = (): Promise<ProjectMember[]> => {
 
     return new Promise((resolve, reject) => {
         uni.request({
-            url: 'https://api-staging.vbot.vn/v1.0/api/project/getAllMember',
+            url: `${PROJECT_API_URL}/getAllMember`,
             method: 'GET',
             data: {
                 projectCode: projectCode,

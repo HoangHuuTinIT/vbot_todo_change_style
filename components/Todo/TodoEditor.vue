@@ -1,3 +1,4 @@
+
 <template>
     <view class="editor-wrapper">
         <view class="editor-label-row">
@@ -52,10 +53,9 @@
                 
                 <view class="tool-divider"></view>
                 
-                <view class="tool-item" @touchend.prevent="toggleAlign">
+                <view class="tool-item" @click="showAlignPopup = true">
                     <image :src="alignIcon" class="img-tool"></image>
                 </view>
-                
                 <view class="tool-divider"></view>
                 
                 <view class="tool-item" @click="handleLinkBtn" :class="{ 'active': isLinkSelected, 'disabled': !canInsertLink && !isLinkSelected }">
@@ -77,17 +77,16 @@
         </view>
         
         <editor 
-            v-else
-            id="editor" 
-            class="ql-container" 
-            placeholder="Nhập mô tả..." 
-            :show-img-size="true" 
-            :show-img-toolbar="true" 
-            :show-img-resize="true"
-            @ready="onEditorReady" 
-            @input="onEditorInput" 
-            @statuschange="onStatusChange">
-        </editor>
+                    id="editor" 
+                    class="ql-container" 
+                    placeholder="Nhập mô tả..." 
+                    :show-img-size="true" 
+                    :show-img-toolbar="true" 
+                    :show-img-resize="true"
+                    @ready="onEditorReady" 
+                    @input="onEditorInput" 
+                    @statuschange="onStatusChange">
+                </editor>
 
         <view class="color-popup-overlay" v-if="showColorPopup" @click="closeColorPopup">
              <view class="color-popup" @click.stop>
@@ -99,24 +98,43 @@
             </view>
         </view>
 
-        <view class="link-popup-overlay" v-if="showLinkPopup" @click="closeLinkPopup">
-            <view class="link-popup" @click.stop>
-                <text class="popup-title">{{ isLinkSelected ? 'Chỉnh sửa liên kết' : 'Chèn liên kết' }}</text>
-                <view class="input-group">
-                    <text class="input-label">Văn bản hiển thị:</text>
-                    <input class="link-input" v-model="linkText" placeholder="Nhập văn bản..." />
+        <view class="color-popup-overlay" v-if="showColorPopup" @click="closeColorPopup">
+                     <view class="color-popup" @click.stop>
+                        <text class="popup-title">Chọn màu</text>
+                        <view class="color-grid">
+                            <view v-for="c in colorList" :key="c" class="color-cell" :style="{ backgroundColor: c }" @click="selectColor(c)"></view>
+                            <view class="color-cell remove-color" @click="selectColor(null)">✕</view>
+                        </view>
+                    </view>
                 </view>
-                <view class="input-group">
-                    <text class="input-label">Đường dẫn (URL):</text>
-                    <input class="link-input" v-model="linkUrl" placeholder="https://" :focus="focusLinkInput" />
+        
+                <view class="link-popup-overlay" v-if="showLinkPopup" @click="closeLinkPopup">
+                    <view class="link-popup" @click.stop>
+                        <text class="popup-title">Chèn liên kết</text>
+                         </view>
                 </view>
-                <view class="link-actions">
-                    <button v-if="isLinkSelected" class="link-btn remove" @click="removeLink">Gỡ Link</button>
-                    <button class="link-btn cancel" @click="closeLinkPopup">{{ isLinkSelected ? 'Hủy' : 'Thoát' }}</button>
-                    <button class="link-btn confirm" @click="confirmLink">Lưu</button>
-                </view>
-            </view>
-        </view>
+				<view class="color-popup-overlay" v-if="showAlignPopup" @click="showAlignPopup = false">
+				    <view class="link-popup" @click.stop> <text class="popup-title">Căn chỉnh</text>
+				        
+				        <view class="align-grid">
+				            <view class="tool-item align-item" @click="selectAlign('left')" :class="{ active: formats.align === 'left' }">
+				                <image src="https://img.icons8.com/ios/50/666666/align-left.png" class="img-tool"></image>
+				            </view>
+				            
+				            <view class="tool-item align-item" @click="selectAlign('center')" :class="{ active: formats.align === 'center' }">
+				                <image src="https://img.icons8.com/ios/50/666666/align-center.png" class="img-tool"></image>
+				            </view>
+				            
+				            <view class="tool-item align-item" @click="selectAlign('right')" :class="{ active: formats.align === 'right' }">
+				                <image src="https://img.icons8.com/ios/50/666666/align-right.png" class="img-tool"></image>
+				            </view>
+				            
+				            <view class="tool-item align-item" @click="selectAlign('justify')" :class="{ active: formats.align === 'justify' }">
+				                <image src="https://img.icons8.com/ios/50/666666/align-justify.png" class="img-tool"></image>
+				            </view>
+				        </view>
+				    </view>
+				</view>
     </view>
 </template>
 
@@ -153,7 +171,16 @@ const colorList = ['#000000', '#424242', '#666666', '#999999', '#B7B7B7', '#CCCC
 const headerOptions = [{label:'Normal',value:null},{label:'H1',value:1},{label:'H2',value:2},{label:'H3',value:3}];
 
 const alignIcon = computed(() => formats.value.align === 'center' ? 'https://img.icons8.com/ios/50/666666/align-center.png' : (formats.value.align === 'right' ? 'https://img.icons8.com/ios/50/666666/align-right.png' : 'https://img.icons8.com/ios/50/666666/align-left.png'));
-const isPopupOpen = computed(() => showLinkPopup.value || showColorPopup.value);
+const showAlignPopup = ref(false);
+
+// 2. Cập nhật computed isPopupOpen (để nó biết đang có popup mở)
+const isPopupOpen = computed(() => showLinkPopup.value || showColorPopup.value || showAlignPopup.value);
+
+// 3. Hàm chọn căn lề
+const selectAlign = (alignType) => {
+    format('align', alignType); // alignType nhận vào: 'left', 'center', 'right', 'justify'
+    showAlignPopup.value = false; // Đóng popup sau khi chọn
+};
 
 // --- METHODS ---
 
@@ -166,16 +193,34 @@ const onEditorReady = () => {
         }
     }).exec();
 };
+// ... (Các phần import giữ nguyên)
+
+// Thêm một biến để lưu giá trị vừa mới emit ra
+const lastEmittedValue = ref('');
+
+// --- SỬA ĐOẠN WATCH ---
 watch(() => props.modelValue, (newVal) => {
+    // Kiểm tra: Nếu giá trị mới từ cha truyền xuống GIỐNG HỆT giá trị mình vừa gõ
+    // Thì DỪNG LẠI, không setContents nữa để tránh reset con trỏ.
+    if (newVal === lastEmittedValue.value) return;
+
     if (editorCtx.value && newVal) {
-        // Cập nhật lại nội dung editor khi có dữ liệu mới
         editorCtx.value.setContents({ html: newVal });
     }
 });
+
+// --- SỬA ĐOẠN INPUT ---
 const onEditorInput = (e) => {
-    // Emit giá trị ra ngoài cho cha (v-model)
-    emit('update:modelValue', e.detail.html);
+    const val = e.detail.html;
+    
+    // Lưu lại giá trị vừa gõ để lát nữa so sánh trong watch
+    lastEmittedValue.value = val;
+    
+    // Emit giá trị ra ngoài
+    emit('update:modelValue', val);
 };
+
+// ... (Các phần khác giữ nguyên)
 
 const onStatusChange = (e) => { 
     formats.value = e.detail;
@@ -261,7 +306,7 @@ const insertVideo = () => { uni.chooseVideo({ count: 1, success: (r) => editorCt
     .static-view { padding: 10px 0; border-top: 1px solid #eee; color: #333; min-height: 120px; overflow-y: auto; }
     
     /* Popup Styles */
-    .color-popup-overlay, .link-popup-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.4); z-index: 9999; display: flex; justify-content: center; align-items: center; }
+    .color-popup-overlay, .link-popup-overlay { position: fixed; z-index: 9999;;top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.4); z-index: 9999; display: flex; justify-content: center; align-items: center; }
     .color-popup, .link-popup { background-color: #fff; width: 85%; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: popIn 0.2s ease-out; }
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     .popup-title { font-size: 16px; font-weight: bold; margin-bottom: 15px; display: block; text-align: center; color: #333; }

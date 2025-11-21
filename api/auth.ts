@@ -1,11 +1,11 @@
-//api/auth.ts
 import { request } from '@/utils/request.js';
 import { SYSTEM_CONFIG } from '@/utils/enums';
+// 1. Import biến AUTH_URL từ file config
+import { AUTH_API_URL, CRM_API_URL } from '@/utils/config'; 
 
 // Định nghĩa kiểu dữ liệu trả về của API Login gốc
 interface LoginResponse {
     access_token: string;
-    // Thêm các trường khác bạn cần:
     expires_in: number;
     uid: string;
     token_type: string;
@@ -15,7 +15,8 @@ interface LoginResponse {
 export const systemLogin = (username: string, password: string): Promise<LoginResponse> => {
     return new Promise((resolve, reject) => {
         uni.request({
-            url: 'https://api-staging.vbot.vn/v1.0/token',
+            // 2. Sửa URL cứng thành biến ghép
+           url: `${AUTH_API_URL}/token`,
             method: 'POST',
             header: { 'Content-Type': 'application/x-www-form-urlencoded' },
             data: {
@@ -26,7 +27,6 @@ export const systemLogin = (username: string, password: string): Promise<LoginRe
                 source: SYSTEM_CONFIG.SOURCE_PARAM 
             },
             success: (res: UniApp.RequestSuccessCallbackResult) => {
-                // Ép kiểu body trả về
                 const data = res.data as any;
                 if (res.statusCode === 200 && data.access_token) {
                     resolve(data as LoginResponse);
@@ -43,7 +43,9 @@ export const systemLogin = (username: string, password: string): Promise<LoginRe
 export const getTodoToken = (rootToken: string, projectCode: string, uid: string): Promise<string> => {
     return new Promise((resolve, reject) => {
         uni.request({
-            url: `https://api-staging.vbot.vn/v1.0/api/module-crm/token`,
+            // 3. Sửa URL cứng thành biến ghép
+            // Lưu ý: AUTH_URL của bạn là ".../v1.0", nên đoạn sau chỉ cần bắt đầu từ "/api/..."
+           url: `${CRM_API_URL}/token`,
             method: 'GET',
             data: {
                 projectCode: projectCode,
@@ -56,7 +58,6 @@ export const getTodoToken = (rootToken: string, projectCode: string, uid: string
             },
             success: (res: UniApp.RequestSuccessCallbackResult) => {
                 const data = res.data as any;
-                // Kiểm tra theo cấu trúc: data.data.token
                 if (data && data.data && data.data.token) {
                     resolve(data.data.token as string);
                 } else {

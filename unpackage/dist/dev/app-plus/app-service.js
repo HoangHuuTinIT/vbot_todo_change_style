@@ -1706,10 +1706,18 @@ This will fail in production if not fixed.`);
     TRANSPARENT: "transparent",
     HEADER_NORMAL: "Normal"
   };
+  const SERVER_BASE_URL = "https://api-sandbox-h01.vbot.vn/v1.0";
+  const AUTH_API_URL = SERVER_BASE_URL;
+  const CRM_API_URL = `${SERVER_BASE_URL}/api/module-crm`;
+  const PROJECT_API_URL = `${SERVER_BASE_URL}/api/project`;
+  const TODO_API_URL = `${SERVER_BASE_URL}/api/module-todo/todo`;
+  const PROJECT_CODE = "PR202511211001129372";
+  const UID = "87d90802634146e29721476337bce64b";
   const systemLogin = (username, password) => {
     return new Promise((resolve, reject) => {
       uni.request({
-        url: "https://api-staging.vbot.vn/v1.0/token",
+        // 2. Sửa URL cứng thành biến ghép
+        url: `${AUTH_API_URL}/token`,
         method: "POST",
         header: { "Content-Type": "application/x-www-form-urlencoded" },
         data: {
@@ -1734,7 +1742,9 @@ This will fail in production if not fixed.`);
   const getTodoToken = (rootToken, projectCode, uid) => {
     return new Promise((resolve, reject) => {
       uni.request({
-        url: `https://api-staging.vbot.vn/v1.0/api/module-crm/token`,
+        // 3. Sửa URL cứng thành biến ghép
+        // Lưu ý: AUTH_URL của bạn là ".../v1.0", nên đoạn sau chỉ cần bắt đầu từ "/api/..."
+        url: `${CRM_API_URL}/token`,
         method: "GET",
         data: {
           projectCode,
@@ -1813,10 +1823,10 @@ This will fail in production if not fixed.`);
       },
       // Logic đăng nhập Dev (dùng cho localhost)
       async loginDevMode() {
-        const devUser = "647890427";
-        const devPass = "53496785941d8dc2f5aa3e98e753eb3d0780de9fda3d9ac1761c47eaae28ae39";
-        const devUid = "77b7675d29d74cafa23771e46881db7c";
-        const devProject = "PR202511170947436134";
+        const devUser = "hoangtinvpm";
+        const devPass = "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f";
+        const devUid = "87d90802634146e29721476337bce64b";
+        const devProject = "PR202511211001129372";
         try {
           formatAppLog("log", "at stores/auth.ts:78", "🛠 Store: Đang đăng nhập Dev...");
           const loginData = await systemLogin(devUser, devPass);
@@ -1914,8 +1924,6 @@ This will fail in production if not fixed.`);
       });
     });
   };
-  const PROJECT_CODE = "PR202511170947436134";
-  const UID = "77b7675d29d74cafa23771e46881db7c";
   const TODO_STATUS = {
     NEW: "TO_DO",
     IN_PROGRESS: "IN_PROGRESS",
@@ -1978,10 +1986,9 @@ This will fail in production if not fixed.`);
       raw: apiData
     };
   };
-  const API_URL = "https://api-staging.vbot.vn/v1.0/api/module-todo/todo";
   const getTodos = async (params) => {
     const rawData = await request({
-      url: `${API_URL}/getAll`,
+      url: `${TODO_API_URL}/getAll`,
       method: "GET",
       // Lưu ý: Phải là POST để gửi data filter
       data: {
@@ -1998,7 +2005,7 @@ This will fail in production if not fixed.`);
   };
   const getTodoCount = async (params) => {
     const result = await request({
-      url: `${API_URL}/countAll`,
+      url: `${TODO_API_URL}/countAll`,
       method: "GET",
       // Lưu ý: Phải là POST
       data: {
@@ -2010,21 +2017,21 @@ This will fail in production if not fixed.`);
   };
   const createTodo = (data) => {
     return request({
-      url: `${API_URL}/create`,
+      url: `${TODO_API_URL}/create`,
       method: "POST",
       data
     });
   };
   const deleteTodo = (id) => {
     return request({
-      url: `${API_URL}/delete`,
+      url: `${TODO_API_URL}/delete`,
       method: "POST",
       data: { id }
     });
   };
   const getTodoDetail = (id) => {
     return request({
-      url: `${API_URL}/getDetail`,
+      url: `${TODO_API_URL}/getDetail`,
       method: "GET",
       data: {
         id,
@@ -2565,7 +2572,7 @@ This will fail in production if not fixed.`);
               ], 40, ["range", "value"])
             ]),
             vue.createElementVNode("view", { class: "f-group" }, [
-              vue.createElementVNode("text", { class: "f-label" }, "Người giao"),
+              vue.createElementVNode("text", { class: "f-label" }, "Người được giao"),
               vue.createElementVNode("picker", {
                 mode: "selector",
                 range: $setup.assigneeOptions,
@@ -2719,7 +2726,7 @@ This will fail in production if not fixed.`);
     const { rootToken, projectCode } = authStore;
     return new Promise((resolve, reject) => {
       uni.request({
-        url: "https://api-staging.vbot.vn/v1.0/api/project/getAllMember",
+        url: `${PROJECT_API_URL}/getAllMember`,
         method: "GET",
         data: {
           projectCode,
@@ -2775,12 +2782,11 @@ This will fail in production if not fixed.`);
       notificationReceivedAt: dateToTimestamp(fullNotifyDateTime)
     };
   };
-  const CRM_BASE_URL = "https://api-staging.vbot.vn/v1.0/api/module-crm";
   const getCrmToken = (projectCode, uid) => {
     const authStore = useAuthStore();
     return new Promise((resolve, reject) => {
       uni.request({
-        url: `${CRM_BASE_URL}/token`,
+        url: `${CRM_API_URL}/token`,
         method: "GET",
         data: {
           projectCode,
@@ -2809,7 +2815,7 @@ This will fail in production if not fixed.`);
   const getCrmFieldSearch = (crmToken) => {
     return new Promise((resolve, reject) => {
       uni.request({
-        url: `${CRM_BASE_URL}/Customer/getAllFieldSearch`,
+        url: `${CRM_API_URL}/Customer/getAllFieldSearch`,
         method: "POST",
         data: {},
         // Body rỗng
@@ -2832,7 +2838,7 @@ This will fail in production if not fixed.`);
   const getCrmCustomers = (crmToken, body) => {
     return new Promise((resolve, reject) => {
       uni.request({
-        url: `${CRM_BASE_URL}/Customer/getAll`,
+        url: `${CRM_API_URL}/Customer/getAll`,
         method: "POST",
         data: body,
         header: {
@@ -3031,7 +3037,12 @@ This will fail in production if not fixed.`);
       const colorList = ["#000000", "#424242", "#666666", "#999999", "#B7B7B7", "#CCCCCC", "#D9D9D9", "#EFEFEF", "#F3F3F3", "#FFFFFF", "#980000", "#FF0000", "#FF9900", "#FFFF00", "#00FF00", "#00FFFF", "#4A86E8", "#0000FF", "#9900FF", "#FF00FF", "#CC4125", "#E06666", "#F6B26B", "#FFD966", "#93C47D", "#76A5AF", "#6D9EEB", "#6FA8DC", "#8E7CC3", "#C27BA0", "#A61C00", "#CC0000", "#E69138", "#F1C232", "#6AA84F", "#45818E", "#3C78D8", "#3D85C6", "#674EA7", "#A64D79"];
       const headerOptions = [{ label: "Normal", value: null }, { label: "H1", value: 1 }, { label: "H2", value: 2 }, { label: "H3", value: 3 }];
       const alignIcon = vue.computed(() => formats.value.align === "center" ? "https://img.icons8.com/ios/50/666666/align-center.png" : formats.value.align === "right" ? "https://img.icons8.com/ios/50/666666/align-right.png" : "https://img.icons8.com/ios/50/666666/align-left.png");
-      const isPopupOpen = vue.computed(() => showLinkPopup.value || showColorPopup.value);
+      const showAlignPopup = vue.ref(false);
+      const isPopupOpen = vue.computed(() => showLinkPopup.value || showColorPopup.value || showAlignPopup.value);
+      const selectAlign = (alignType) => {
+        format("align", alignType);
+        showAlignPopup.value = false;
+      };
       const onEditorReady = () => {
         uni.createSelectorQuery().in(instance.proxy).select("#editor").context((res) => {
           editorCtx.value = res.context;
@@ -3040,13 +3051,18 @@ This will fail in production if not fixed.`);
           }
         }).exec();
       };
+      const lastEmittedValue = vue.ref("");
       vue.watch(() => props.modelValue, (newVal) => {
+        if (newVal === lastEmittedValue.value)
+          return;
         if (editorCtx.value && newVal) {
           editorCtx.value.setContents({ html: newVal });
         }
       });
       const onEditorInput = (e) => {
-        emit("update:modelValue", e.detail.html);
+        const val = e.detail.html;
+        lastEmittedValue.value = val;
+        emit("update:modelValue", val);
       };
       const onStatusChange = (e) => {
         formats.value = e.detail;
@@ -3153,7 +3169,7 @@ This will fail in production if not fixed.`);
       const insertVideo = () => {
         uni.chooseVideo({ count: 1, success: (r) => editorCtx.value.insertVideo({ src: r.tempFilePath, width: "80%" }) });
       };
-      const __returned__ = { props, emit, editorCtx, formats, instance, isTyping, showLinkPopup, linkUrl, linkText, canInsertLink, isLinkSelected, focusLinkInput, showColorPopup, colorType, currentColor, currentBgColor, currentHeader, colorList, headerOptions, alignIcon, isPopupOpen, onEditorReady, onEditorInput, onStatusChange, format, handleLinkBtn, closeLinkPopup, confirmLink, removeLink, onHeaderChange, toggleAlign, openColorPicker, closeColorPopup, selectColor, insertImage, insertVideo };
+      const __returned__ = { props, emit, editorCtx, formats, instance, isTyping, showLinkPopup, linkUrl, linkText, canInsertLink, isLinkSelected, focusLinkInput, showColorPopup, colorType, currentColor, currentBgColor, currentHeader, colorList, headerOptions, alignIcon, showAlignPopup, isPopupOpen, selectAlign, onEditorReady, lastEmittedValue, onEditorInput, onStatusChange, format, handleLinkBtn, closeLinkPopup, confirmLink, removeLink, onHeaderChange, toggleAlign, openColorPicker, closeColorPopup, selectColor, insertImage, insertVideo };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
@@ -3313,21 +3329,15 @@ This will fail in production if not fixed.`);
             )
           ]),
           vue.createElementVNode("view", { class: "tool-divider" }),
-          vue.createElementVNode(
-            "view",
-            {
-              class: "tool-item",
-              onTouchend: vue.withModifiers($setup.toggleAlign, ["prevent"])
-            },
-            [
-              vue.createElementVNode("image", {
-                src: $setup.alignIcon,
-                class: "img-tool"
-              }, null, 8, ["src"])
-            ],
-            32
-            /* NEED_HYDRATION */
-          ),
+          vue.createElementVNode("view", {
+            class: "tool-item",
+            onClick: _cache[8] || (_cache[8] = ($event) => $setup.showAlignPopup = true)
+          }, [
+            vue.createElementVNode("image", {
+              src: $setup.alignIcon,
+              class: "img-tool"
+            }, null, 8, ["src"])
+          ]),
           vue.createElementVNode("view", { class: "tool-divider" }),
           vue.createElementVNode(
             "view",
@@ -3378,10 +3388,10 @@ This will fail in production if not fixed.`);
         vue.createElementVNode("rich-text", {
           nodes: $props.modelValue || "<p style='color:#999'>Nhập mô tả...</p>"
         }, null, 8, ["nodes"])
-      ])) : (vue.openBlock(), vue.createElementBlock(
+      ])) : vue.createCommentVNode("v-if", true),
+      vue.createElementVNode(
         "editor",
         {
-          key: 1,
           id: "editor",
           class: "ql-container",
           placeholder: "Nhập mô tả...",
@@ -3395,15 +3405,15 @@ This will fail in production if not fixed.`);
         null,
         32
         /* NEED_HYDRATION */
-      )),
+      ),
       $setup.showColorPopup ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 2,
+        key: 1,
         class: "color-popup-overlay",
         onClick: $setup.closeColorPopup
       }, [
         vue.createElementVNode("view", {
           class: "color-popup",
-          onClick: _cache[9] || (_cache[9] = vue.withModifiers(() => {
+          onClick: _cache[10] || (_cache[10] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
           vue.createElementVNode("text", { class: "popup-title" }, "Chọn màu"),
@@ -3424,7 +3434,40 @@ This will fail in production if not fixed.`);
             )),
             vue.createElementVNode("view", {
               class: "color-cell remove-color",
-              onClick: _cache[8] || (_cache[8] = ($event) => $setup.selectColor(null))
+              onClick: _cache[9] || (_cache[9] = ($event) => $setup.selectColor(null))
+            }, "✕")
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.showColorPopup ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 2,
+        class: "color-popup-overlay",
+        onClick: $setup.closeColorPopup
+      }, [
+        vue.createElementVNode("view", {
+          class: "color-popup",
+          onClick: _cache[12] || (_cache[12] = vue.withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          vue.createElementVNode("text", { class: "popup-title" }, "Chọn màu"),
+          vue.createElementVNode("view", { class: "color-grid" }, [
+            (vue.openBlock(), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.colorList, (c) => {
+                return vue.createElementVNode("view", {
+                  key: c,
+                  class: "color-cell",
+                  style: vue.normalizeStyle({ backgroundColor: c }),
+                  onClick: ($event) => $setup.selectColor(c)
+                }, null, 12, ["onClick"]);
+              }),
+              64
+              /* STABLE_FRAGMENT */
+            )),
+            vue.createElementVNode("view", {
+              class: "color-cell remove-color",
+              onClick: _cache[11] || (_cache[11] = ($event) => $setup.selectColor(null))
             }, "✕")
           ])
         ])
@@ -3436,63 +3479,84 @@ This will fail in production if not fixed.`);
       }, [
         vue.createElementVNode("view", {
           class: "link-popup",
-          onClick: _cache[12] || (_cache[12] = vue.withModifiers(() => {
+          onClick: _cache[13] || (_cache[13] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
-          vue.createElementVNode(
-            "text",
-            { class: "popup-title" },
-            vue.toDisplayString($setup.isLinkSelected ? "Chỉnh sửa liên kết" : "Chèn liên kết"),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode("view", { class: "input-group" }, [
-            vue.createElementVNode("text", { class: "input-label" }, "Văn bản hiển thị:"),
-            vue.withDirectives(vue.createElementVNode(
-              "input",
-              {
-                class: "link-input",
-                "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => $setup.linkText = $event),
-                placeholder: "Nhập văn bản..."
-              },
-              null,
-              512
-              /* NEED_PATCH */
-            ), [
-              [vue.vModelText, $setup.linkText]
-            ])
-          ]),
-          vue.createElementVNode("view", { class: "input-group" }, [
-            vue.createElementVNode("text", { class: "input-label" }, "Đường dẫn (URL):"),
-            vue.withDirectives(vue.createElementVNode("input", {
-              class: "link-input",
-              "onUpdate:modelValue": _cache[11] || (_cache[11] = ($event) => $setup.linkUrl = $event),
-              placeholder: "https://",
-              focus: $setup.focusLinkInput
-            }, null, 8, ["focus"]), [
-              [vue.vModelText, $setup.linkUrl]
-            ])
-          ]),
-          vue.createElementVNode("view", { class: "link-actions" }, [
-            $setup.isLinkSelected ? (vue.openBlock(), vue.createElementBlock("button", {
-              key: 0,
-              class: "link-btn remove",
-              onClick: $setup.removeLink
-            }, "Gỡ Link")) : vue.createCommentVNode("v-if", true),
+          vue.createElementVNode("text", { class: "popup-title" }, "Chèn liên kết")
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.showAlignPopup ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 4,
+        class: "color-popup-overlay",
+        onClick: _cache[19] || (_cache[19] = ($event) => $setup.showAlignPopup = false)
+      }, [
+        vue.createElementVNode("view", {
+          class: "link-popup",
+          onClick: _cache[18] || (_cache[18] = vue.withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          vue.createElementVNode("text", { class: "popup-title" }, "Căn chỉnh"),
+          vue.createElementVNode("view", { class: "align-grid" }, [
             vue.createElementVNode(
-              "button",
+              "view",
               {
-                class: "link-btn cancel",
-                onClick: $setup.closeLinkPopup
+                class: vue.normalizeClass(["tool-item align-item", { active: $setup.formats.align === "left" }]),
+                onClick: _cache[14] || (_cache[14] = ($event) => $setup.selectAlign("left"))
               },
-              vue.toDisplayString($setup.isLinkSelected ? "Hủy" : "Thoát"),
-              1
-              /* TEXT */
+              [
+                vue.createElementVNode("image", {
+                  src: "https://img.icons8.com/ios/50/666666/align-left.png",
+                  class: "img-tool"
+                })
+              ],
+              2
+              /* CLASS */
             ),
-            vue.createElementVNode("button", {
-              class: "link-btn confirm",
-              onClick: $setup.confirmLink
-            }, "Lưu")
+            vue.createElementVNode(
+              "view",
+              {
+                class: vue.normalizeClass(["tool-item align-item", { active: $setup.formats.align === "center" }]),
+                onClick: _cache[15] || (_cache[15] = ($event) => $setup.selectAlign("center"))
+              },
+              [
+                vue.createElementVNode("image", {
+                  src: "https://img.icons8.com/ios/50/666666/align-center.png",
+                  class: "img-tool"
+                })
+              ],
+              2
+              /* CLASS */
+            ),
+            vue.createElementVNode(
+              "view",
+              {
+                class: vue.normalizeClass(["tool-item align-item", { active: $setup.formats.align === "right" }]),
+                onClick: _cache[16] || (_cache[16] = ($event) => $setup.selectAlign("right"))
+              },
+              [
+                vue.createElementVNode("image", {
+                  src: "https://img.icons8.com/ios/50/666666/align-right.png",
+                  class: "img-tool"
+                })
+              ],
+              2
+              /* CLASS */
+            ),
+            vue.createElementVNode(
+              "view",
+              {
+                class: vue.normalizeClass(["tool-item align-item", { active: $setup.formats.align === "justify" }]),
+                onClick: _cache[17] || (_cache[17] = ($event) => $setup.selectAlign("justify"))
+              },
+              [
+                vue.createElementVNode("image", {
+                  src: "https://img.icons8.com/ios/50/666666/align-justify.png",
+                  class: "img-tool"
+                })
+              ],
+              2
+              /* CLASS */
+            )
           ])
         ])
       ])) : vue.createCommentVNode("v-if", true)

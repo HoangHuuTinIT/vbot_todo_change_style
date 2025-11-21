@@ -1,18 +1,12 @@
+//api/todo.ts 
 import { request } from '@/utils/request';
-import { PROJECT_CODE } from '@/utils/config';
 import { mapTodoFromApi } from '@/models/todo'; // Import mapper (File này vẫn là JS)
 import type { CreateTodoPayload } from '@/types/todo';
+import { PROJECT_CODE, TODO_API_URL } from '@/utils/config';
 
-const API_URL = 'https://api-staging.vbot.vn/v1.0/api/module-todo/todo';
-
-/**
- * 1. API Lấy danh sách (Có phân trang)
- * - params: Kiểu any (vì chứa nhiều filter động)
- * - Return: Promise trả về mảng any[]
- */
 export const getTodos = async (params: any): Promise<any[]> => {
     const rawData = await request({
-        url: `${API_URL}/getAll`,
+       url: `${TODO_API_URL}/getAll`,
         method: 'GET', // Lưu ý: Phải là POST để gửi data filter
         data: {
             projectCode: PROJECT_CODE,
@@ -35,7 +29,7 @@ export const getTodos = async (params: any): Promise<any[]> => {
  */
 export const getTodoCount = async (params: any): Promise<number> => {
     const result = await request({
-        url: `${API_URL}/countAll`,
+       url: `${TODO_API_URL}/countAll`,
         method: 'GET', // Lưu ý: Phải là POST
         data: {
             projectCode: PROJECT_CODE,
@@ -53,7 +47,7 @@ export const getTodoCount = async (params: any): Promise<number> => {
  */
 export const createTodo = (data: CreateTodoPayload): Promise<any> => {
     return request({
-        url: `${API_URL}/create`,
+        url: `${TODO_API_URL}/create`,
         method: 'POST',
         data: data
     });
@@ -65,7 +59,7 @@ export const createTodo = (data: CreateTodoPayload): Promise<any> => {
  */
 export const deleteTodo = (id: string | number): Promise<any> => {
     return request({
-        url: `${API_URL}/delete`,
+        url: `${TODO_API_URL}/delete`,
         method: 'POST',
         data: { id: id }
     });
@@ -73,7 +67,7 @@ export const deleteTodo = (id: string | number): Promise<any> => {
 
 export const getTodoDetail = (id: string | number): Promise<any> => {
     return request({
-        url: `${API_URL}/getDetail`,
+        url: `${TODO_API_URL}/getDetail`,
         method: 'GET',
         data: {
             id: id,

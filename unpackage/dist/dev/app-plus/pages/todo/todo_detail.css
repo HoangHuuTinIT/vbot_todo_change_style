@@ -165,6 +165,7 @@
 /* Popup Styles */
 .color-popup-overlay[data-v-7d79903f], .link-popup-overlay[data-v-7d79903f] {
   position: fixed;
+  z-index: 9999;
   top: 0;
   left: 0;
   right: 0;

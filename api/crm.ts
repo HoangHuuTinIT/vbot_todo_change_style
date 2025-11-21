@@ -2,15 +2,14 @@
 import { request } from '@/utils/request'; // Hoặc dùng uni.request trực tiếp nếu cần custom header khác biệt
 import { SYSTEM_CONFIG } from '@/utils/enums';
 import { useAuthStore } from '@/stores/auth';
-
-const CRM_BASE_URL = 'https://api-staging.vbot.vn/v1.0/api/module-crm';
+import { CRM_API_URL } from '@/utils/config';
 
 // 1. Lấy Token CRM
 export const getCrmToken = (projectCode: string, uid: string): Promise<string> => {
     const authStore = useAuthStore();
     return new Promise((resolve, reject) => {
         uni.request({
-            url: `${CRM_BASE_URL}/token`,
+            url: `${CRM_API_URL}/token`,
             method: 'GET',
             data: {
                 projectCode,
@@ -37,7 +36,7 @@ export const getCrmToken = (projectCode: string, uid: string): Promise<string> =
 export const getCrmFieldSearch = (crmToken: string): Promise<any[]> => {
     return new Promise((resolve, reject) => {
         uni.request({
-            url: `${CRM_BASE_URL}/Customer/getAllFieldSearch`,
+            url: `${CRM_API_URL}/Customer/getAllFieldSearch`,
             method: 'POST',
             data: {}, // Body rỗng
             header: {
@@ -59,7 +58,7 @@ export const getCrmFieldSearch = (crmToken: string): Promise<any[]> => {
 export const getCrmCustomers = (crmToken: string, body: any): Promise<any[]> => {
     return new Promise((resolve, reject) => {
         uni.request({
-            url: `${CRM_BASE_URL}/Customer/getAll`,
+           url: `${CRM_API_URL}/Customer/getAll`,
             method: 'POST',
             data: body,
             header: {
