@@ -2884,7 +2884,8 @@ This will fail in production if not fixed.`);
     const showCustomerModal = vue.ref(false);
     const loadingCustomer = vue.ref(false);
     const customerList = vue.ref([]);
-    const customerToken = vue.ref("");
+    vue.ref("");
+    const cachedCrmToken = vue.ref("");
     const fetchMembers = async () => {
       try {
         const data = await getAllMembers();
@@ -2900,8 +2901,11 @@ This will fail in production if not fixed.`);
         return;
       loadingCustomer.value = true;
       try {
-        const token = await getCrmToken(PROJECT_CODE, UID);
-        customerToken.value = token;
+        let token = cachedCrmToken.value;
+        if (!token) {
+          token = await getCrmToken(PROJECT_CODE, UID);
+          cachedCrmToken.value = token;
+        }
         const fields = await getCrmFieldSearch(token);
         const nameField = fields.find((f) => f.code === "name");
         const phoneField = fields.find((f) => f.code === "phone");
@@ -2935,8 +2939,11 @@ This will fail in production if not fixed.`);
           };
         });
       } catch (error) {
-        formatAppLog("error", "at controllers/create_todo.ts:113", "Lỗi tải khách hàng:", error);
-        uni.showToast({ title: "Lỗi tải dữ liệu CRM", icon: "none" });
+        formatAppLog("error", "at controllers/create_todo.ts:115", "Lỗi tải khách hàng:", error);
+        if ((error == null ? void 0 : error.status) === 401 || (error == null ? void 0 : error.statusCode) === 401) {
+          cachedCrmToken.value = "";
+        }
+        uni.showToast({ title: "Không thể tải khách hàng", icon: "none" });
       } finally {
         loadingCustomer.value = false;
       }
@@ -2981,7 +2988,7 @@ This will fail in production if not fixed.`);
           uni.navigateBack();
         }, 1500);
       } catch (error) {
-        formatAppLog("error", "at controllers/create_todo.ts:175", "❌ Create Error:", error);
+        formatAppLog("error", "at controllers/create_todo.ts:180", "❌ Create Error:", error);
         const errorMsg = (error == null ? void 0 : error.message) || "Thất bại";
         uni.showToast({ title: "Lỗi: " + errorMsg, icon: "none" });
       } finally {

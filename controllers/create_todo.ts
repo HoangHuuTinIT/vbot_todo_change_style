@@ -44,7 +44,7 @@ export const useCreateTodoController = () => {
     const customerList = ref<any[]>([]); // List đã qua xử lý để hiển thị
     const customerToken = ref(''); // Lưu token CRM để dùng lại nếu cần
     // --- LOGIC ACTIONS ---
-    
+    const cachedCrmToken = ref<string>('');
     // 1. Hàm gọi API lấy thành viên (Mới)
     const fetchMembers = async () => {
         try {
@@ -65,9 +65,11 @@ export const useCreateTodoController = () => {
 	        loadingCustomer.value = true;
 	        try {
 	            // B1: Lấy Token CRM
-	            const token = await getCrmToken(PROJECT_CODE, UID);
-	            customerToken.value = token;
-	
+	            let token = cachedCrmToken.value;
+	                        if (!token) {
+	                            token = await getCrmToken(PROJECT_CODE, UID);
+	                            cachedCrmToken.value = token; // Lưu lại dùng cho lần sau
+	                        }
 	            // B2: Lấy cấu hình Field Search để tìm ID của name, phone
 	            const fields = await getCrmFieldSearch(token);
 	            
@@ -111,7 +113,10 @@ export const useCreateTodoController = () => {
 	
 	        } catch (error) {
 	            console.error('Lỗi tải khách hàng:', error);
-	            uni.showToast({ title: 'Lỗi tải dữ liệu CRM', icon: 'none' });
+	            if (error?.status === 401 || error?.statusCode === 401) {
+	                            cachedCrmToken.value = '';
+	                        }
+							uni.showToast({ title: 'Không thể tải khách hàng', icon: 'none' });
 	        } finally {
 	            loadingCustomer.value = false;
 	        }
