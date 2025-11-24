@@ -3,10 +3,11 @@ import { ref } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { getTodoDetail } from '@/api/todo';
 import { getAllMembers } from '@/api/project';
-import { getCrmToken, getCrmCustomerDetail , getCrmActionTimeline} from '@/api/crm'; // Import API CRM
+import {  getCrmCustomerDetail , getCrmActionTimeline} from '@/api/crm'; // Import API CRM
 import { mapTodoDetailToForm, type TodoDetailForm } from '@/models/todo_detail';
 import { PROJECT_CODE, UID } from '@/utils/config';
 import { TIMELINE_TYPE_MAP } from '@/utils/constants';
+import { useAuthStore } from '@/stores/auth';
 interface HistoryItem {
     id: number;
     timeStr: string;      // Giờ hiển thị (VD: 10:30 21/11)
@@ -15,13 +16,32 @@ interface HistoryItem {
     originalType: string; // Lưu loại gốc để icon nếu cần
 }
 export const useTodoDetailController = () => {
+	const authStore = useAuthStore();
     const isLoading = ref(false);
     // State loading riêng cho phần khách hàng để UI mượt hơn
     const isLoadingCustomer = ref(false); 
 
     const isLoadingHistory = ref(false);
-        const historyList = ref<HistoryItem[]>([]);
-    
+	const historyList = ref<HistoryItem[]>([]);
+       const historyFilterIndex = ref(0); // Vị trí đang chọn (0 là Tất cả)
+           
+           // 1. Danh sách hiển thị (UI)
+           const historyFilterOptions = [
+               'Tất cả', 
+               'Công việc', 
+               'Ticket', 
+               'Lịch sử gọi', 
+               'Khách hàng', 
+               'Ghi chú'
+           ];
+    const historyFilterValues = [
+            'ALL',          // Tất cả
+            'TODO',         // Công việc
+            'TICKET',       // Ticket
+            'HISTORY_CALL', // Lịch sử gọi
+            'CUSTOMER',     // Khách hàng
+            'NOTE'          // Ghi chú
+        ];
         const form = ref<TodoDetailForm>({
             // ... giữ nguyên
             id: '', title: '', code: 'Loading...', desc: '',
@@ -96,9 +116,10 @@ export const useTodoDetailController = () => {
             isLoadingCustomer.value = true;
             try {
                 // B1. Lấy Token
-                const crmToken = await getCrmToken(PROJECT_CODE, UID);
+              const crmToken = authStore.todoToken;
+			  if (!crmToken) return;
                 // B2. Gọi API
-                const res = await getCrmCustomerDetail(crmToken, customerUid);
+               const res = await getCrmCustomerDetail(crmToken, customerUid);
                 
                 // B3. Lấy danh sách fields
                 const fields = res.fields || res.data?.fields || [];
@@ -142,11 +163,15 @@ export const useTodoDetailController = () => {
 const fetchHistoryLog = async (customerUid: string) => {
         isLoadingHistory.value = true;
         try {
+			const currentType = historyFilterValues[historyFilterIndex.value];
             // B1. Lấy token
-            const crmToken = await getCrmToken(PROJECT_CODE, UID);
-            
+            const crmToken = authStore.todoToken;
+            if (!crmToken) {
+                            console.error("Chưa có Token CRM/Todo");
+                            return;
+                        }
             // B2. Gọi API
-            const rawHistory = await getCrmActionTimeline(crmToken, customerUid);
+         const rawHistory = await getCrmActionTimeline(crmToken, customerUid, currentType);
             
             // B3. Xử lý dữ liệu (Map)
             if (Array.isArray(rawHistory)) {
@@ -190,6 +215,15 @@ const fetchHistoryLog = async (customerUid: string) => {
             isLoadingHistory.value = false;
         }
     };
+	const onHistoryFilterChange = (e: any) => {
+	        // 1. Cập nhật index mới
+	        historyFilterIndex.value = e.detail.value;
+	        
+	        // 2. Gọi lại API ngay lập tức (nếu đã có mã khách hàng)
+	        if (form.value.customerCode) {
+	            fetchHistoryLog(form.value.customerCode);
+	        }
+	    };
     // ... (Giữ nguyên các event handler cũ: onStatusChange, saveTodo...)
     const onStatusChange = (e: any) => { form.value.statusIndex = e.detail.value; };
     const onSourceChange = (e: any) => { form.value.sourceIndex = e.detail.value; };
@@ -212,6 +246,10 @@ const fetchHistoryLog = async (customerUid: string) => {
         form,
         statusOptions, sourceOptions, assigneeOptions,
         onStatusChange, onSourceChange, onAssigneeChange,
-        goBack, saveTodo
+        goBack, saveTodo,
+		
+		historyFilterOptions, 
+		historyFilterIndex, 
+		onHistoryFilterChange
     };
 };

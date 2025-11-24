@@ -110,37 +110,49 @@
                 </view>
             </view>
 
-            <view class="section-title">Lịch sử tương tác</view>
-            <view class="history-container">
-                
-                <view v-if="isLoadingHistory" class="loading-row">
-                    <text class="loading-text">Đang tải lịch sử...</text>
-                </view>
-
-                <view v-else-if="historyList.length === 0" class="empty-row">
-                    <text>(Chưa có lịch sử tương tác nào)</text>
-                </view>
-
-                <view v-else class="timeline-list">
-                    <view v-for="(item, index) in historyList" :key="item.id" class="timeline-item">
-                        <view class="timeline-line" v-if="index !== historyList.length - 1"></view>
-                        
-                        <view class="timeline-dot"></view>
-
-                        <view class="timeline-content">
-                            <view class="timeline-header">
-                                <text class="t-actor">{{ item.actorName }}</text>
-                                <text class="t-time">{{ item.timeStr }}</text>
-                            </view>
-                            <text class="t-action">{{ item.content }}</text>
+            <view class="section-header-row">
+                            <text class="section-title no-margin">Lịch sử tương tác</text>
+                            
+                            <picker 
+                                mode="selector" 
+                                :range="historyFilterOptions" 
+                                :value="historyFilterIndex" 
+                                @change="onHistoryFilterChange"
+                            >
+                                <view class="filter-badge">
+                                    {{ historyFilterOptions[historyFilterIndex] }} ▾
+                                </view>
+                            </picker>
                         </view>
-                    </view>
-                </view>
-            </view>
+                        
+                        <view class="history-container">
+                            <view v-if="isLoadingHistory" class="loading-row">
+                                <text class="loading-text">Đang tải lịch sử...</text>
+                            </view>
+            
+                            <view v-else-if="historyList.length === 0" class="empty-row">
+                                <text>(Không tìm thấy dữ liệu)</text>
+                            </view>
+            
+                            <view v-else class="timeline-list">
+                                <view v-for="(item, index) in historyList" :key="item.id" class="timeline-item">
+                                    <view class="timeline-line" v-if="index !== historyList.length - 1"></view>
+                                    <view class="timeline-dot"></view>
+                                    <view class="timeline-content">
+                                        <view class="timeline-header">
+                                            <text class="t-actor">{{ item.actorName }}</text>
+                                            <text class="t-time">{{ item.timeStr }}</text>
+                                        </view>
+                                        <text class="t-action">{{ item.content }}</text>
+                                    </view>
+                                </view>
+                            </view>
+                        </view>
 
             <view style="height: 50px;"></view>
 
-        </scroll-view> </view>
+        </scroll-view> 
+		</view>
 </template>
 
 <script setup lang="ts">
@@ -155,7 +167,8 @@
         form, 
         statusOptions, sourceOptions, assigneeOptions,
         onStatusChange, onSourceChange, onAssigneeChange,
-        saveTodo
+        saveTodo,
+		historyFilterOptions, historyFilterIndex, onHistoryFilterChange,
     } = useTodoDetailController();
 </script>
 
@@ -253,6 +266,27 @@
 	        color: #555;
 	        line-height: 1.4;
 	    }
-		
+		.section-header-row {
+		        display: flex;
+		        justify-content: space-between;
+		        align-items: center;
+		        margin-bottom: 10px;
+		        margin-left: 5px;
+		        margin-right: 5px; /* Căn lề phải cho đẹp */
+		    }
+			.section-title.no-margin {
+			        margin-bottom: 0; /* Bỏ margin bottom cũ của title để căn giữa với picker */
+			    }
+			
+			    .filter-badge {
+			        background-color: #e3f2fd; /* Màu nền xanh nhạt */
+			        color: #007aff;
+			        font-size: 13px;
+			        font-weight: 600;
+			        padding: 4px 10px;
+			        border-radius: 15px;
+			        display: flex;
+			        align-items: center;
+			    }
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; color: #007aff; font-weight: bold; }
 </style>

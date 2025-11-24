@@ -1,4 +1,4 @@
-import { request } from '@/utils/request.js';
+import { request } from '@/utils/request';
 import { SYSTEM_CONFIG } from '@/utils/enums';
 // 1. Import biến AUTH_URL từ file config
 import { AUTH_API_URL, CRM_API_URL } from '@/utils/config'; 

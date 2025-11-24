@@ -1,35 +1,50 @@
+// src/stores/auth.ts
 import { defineStore } from 'pinia';
 import { systemLogin, getTodoToken } from '@/api/auth';
-import { PROJECT_CODE, UID } from '@/utils/config'; // Import config nếu cần fallback
+import { PROJECT_CODE, UID } from '@/utils/config';
+
+// Hằng số: 7 ngày tính bằng mili giây
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 export const useAuthStore = defineStore('auth', {
-    // 1. STATE: Chứa dữ liệu (Giống data trong Vue)
+    // 1. STATE
     state: () => ({
         rootToken: uni.getStorageSync('vbot_root_token') || '',
+        // [MỚI] Lưu thời điểm lấy Root Token để tính hạn 7 ngày
+        rootLoginTime: uni.getStorageSync('vbot_root_login_time') || 0, 
+        
         todoToken: uni.getStorageSync('todo_access_token') || '',
+        
         uid: uni.getStorageSync('vbot_uid') || '',
         projectCode: uni.getStorageSync('vbot_project_code') || '',
-        tokenExpiry: uni.getStorageSync('token_expiry_time') || 0
     }),
 
-    // 2. GETTERS: Tính toán dữ liệu (Giống computed)
+    // 2. GETTERS
     getters: {
         isLoggedIn: (state) => !!state.todoToken,
-        // Kiểm tra xem token còn hạn không
-        isValidToken: (state) => {
+        
+        // [MỚI] Kiểm tra Root Token còn hạn 7 ngày không
+        isRootTokenValid: (state) => {
+            if (!state.rootToken || !state.rootLoginTime) return false;
             const now = Date.now();
-            return state.todoToken && state.tokenExpiry && now < state.tokenExpiry;
+            // Nếu thời gian hiện tại trừ thời gian đăng nhập nhỏ hơn 7 ngày -> Còn hạn
+            return (now - state.rootLoginTime) < SEVEN_DAYS_MS;
         }
     },
 
-    // 3. ACTIONS: Xử lý logic (Giống methods)
+    // 3. ACTIONS
     actions: {
-        // Hàm này dùng để lưu cả vào State lẫn Storage (giữ đồng bộ)
-        setAuthData(data) {
+        setAuthData(data: any) {
+            // Lưu Root Token + Thời gian đăng nhập
             if (data.rootToken) {
                 this.rootToken = data.rootToken;
                 uni.setStorageSync('vbot_root_token', data.rootToken);
+                
+                // Lưu mốc thời gian hiện tại
+                this.rootLoginTime = Date.now();
+                uni.setStorageSync('vbot_root_login_time', this.rootLoginTime);
             }
+
             if (data.uid) {
                 this.uid = data.uid;
                 uni.setStorageSync('vbot_uid', data.uid);
@@ -38,31 +53,38 @@ export const useAuthStore = defineStore('auth', {
                 this.projectCode = data.projectCode;
                 uni.setStorageSync('vbot_project_code', data.projectCode);
             }
+
+            // Lưu Todo Token (Token riêng module)
             if (data.todoToken) {
                 this.todoToken = data.todoToken;
                 uni.setStorageSync('todo_access_token', data.todoToken);
-                
-                // Set hạn 1 tiếng
-                const expiresIn = 3600 * 1000;
-                this.tokenExpiry = Date.now() + expiresIn;
-                uni.setStorageSync('token_expiry_time', this.tokenExpiry);
+                // Không cần set expiry cho todoToken nữa vì nó "bất tử"
             }
         },
 
-        // Logic đổi Root Token lấy Todo Token
+        // Đổi Root Token lấy Todo Token
         async exchangeForTodoToken() {
             try {
-                console.log('🔄 Store: Đang đổi Token Todo...');
+                // Kiểm tra lại Root Token trước khi đổi
+                if (!this.isRootTokenValid) {
+                    console.log('⚠️ Root Token hết hạn 7 ngày, cần đăng nhập lại.');
+                    await this.loginDevMode(); // Gọi đăng nhập lại để lấy Root mới
+                    return;
+                }
+
+                console.log('🔄 Store: Đang dùng Root Token đổi Todo Token...');
                 const todoToken = await getTodoToken(this.rootToken, this.projectCode, this.uid);
                 this.setAuthData({ todoToken });
-                console.log('✅ Store: Đã có Token Todo mới.');
+                console.log('✅ Store: Đã lấy được Todo Token mới.');
             } catch (error) {
                 console.error('❌ Store: Lỗi đổi token:', error);
+                // Nếu đổi lỗi (VD: root token bị thu hồi), logout luôn cho an toàn
+                this.logout();
                 throw error;
             }
         },
 
-        // Logic đăng nhập Dev (dùng cho localhost)
+        // Đăng nhập hệ thống (Lấy Root Token)
         async loginDevMode() {
             const devUser = import.meta.env.VITE_TEST_USERNAME;
             const devPass = import.meta.env.VITE_TEST_PASSWORD;
@@ -75,64 +97,56 @@ export const useAuthStore = defineStore('auth', {
             }
 
             try {
-                console.log('🛠 Store: Đang đăng nhập Dev...');
+                console.log('🛠 Store: Đang gọi API đăng nhập hệ thống...');
                 const loginData = await systemLogin(devUser, devPass);
                 
-                // Lưu thông tin Root
+                // Lưu thông tin Root (setAuthData sẽ tự lưu rootLoginTime)
                 this.setAuthData({
                     rootToken: loginData.access_token,
                     uid: devUid,
                     projectCode: devProject
                 });
 
-                // Đổi sang Token Todo
+                // Sau khi có Root mới -> Lấy Todo Token
                 await this.exchangeForTodoToken();
             } catch (error) {
                 console.error('❌ Store: Đăng nhập Dev thất bại', error);
             }
         },
 
-        // --- HÀM CHÍNH: App.vue sẽ gọi hàm này ---
-        async initialize(options) {
+        // --- HÀM CHÍNH: Logic thông minh ---
+        async initialize(options: any) {
             console.log('🚀 Store: Khởi tạo Auth...');
 
-            // CASE 1: Có Token từ URL (Production)
-            if (options && options.query && (options.query.token || options.query.access_token)) {
-                console.log('>> Mode: Production (URL Detect)');
-                const rootToken = options.query.token || options.query.access_token;
-                const uid = options.query.uid;
-                const projectCode = options.query.projectCode;
+            // CASE 1: Ưu tiên dùng Token Module có sẵn (Nhanh nhất)
+            if (this.todoToken) {
+                console.log('>> ✅ Đã có Token Module cũ. Dùng luôn, không cần gọi API.');
+                return; 
+            }
 
-                // Lưu thông tin gốc
-                this.setAuthData({ rootToken, uid, projectCode });
-                
-                // Đổi token ngay lập tức
+            // CASE 2: Không có Token Module, kiểm tra Root Token
+            // Nếu Root Token còn hạn (< 7 ngày) -> Dùng nó đổi Token Module
+            if (this.isRootTokenValid) {
+                console.log('>> ⚠️ Mất Token Module, nhưng Root Token còn hạn. Đang lấy lại...');
                 await this.exchangeForTodoToken();
                 return;
             }
 
-            // CASE 2: Không có URL -> Kiểm tra Cache
-            if (this.isValidToken) {
-                console.log('>> Token cũ còn hạn, không cần làm gì.');
-                return;
-            }
-
-            // CASE 3: Cache hết hạn hoặc không có -> Login Dev
-            console.log('>> Mode: Dev / Expired Token');
+            // CASE 3: Không có gì hoặc Root Token hết hạn -> Đăng nhập lại từ đầu
+            console.log('>> ❌ Root Token hết hạn hoặc chưa đăng nhập. Login lại...');
             await this.loginDevMode();
         },
-		logout() {
-		            console.log('👋 Store: Đăng xuất, xóa Token...');
-		            this.rootToken = '';
-		            this.todoToken = '';
-		            this.tokenExpiry = 0;
-		            
-		            // Xóa Storage
-		            uni.removeStorageSync('todo_access_token');
-		            uni.removeStorageSync('token_expiry_time');
-		            // Giữ lại rootToken phòng khi user mở lại app còn cứu được, 
-		            // hoặc xóa luôn tùy logic bảo mật của bạn. Ở đây mình xóa luôn cho sạch.
-		            uni.removeStorageSync('vbot_root_token');
-		}
+
+        logout() {
+            console.log('👋 Store: Đăng xuất...');
+            this.rootToken = '';
+            this.rootLoginTime = 0;
+            this.todoToken = '';
+            
+            uni.removeStorageSync('todo_access_token');
+            uni.removeStorageSync('vbot_root_token');
+            uni.removeStorageSync('vbot_root_login_time');
+            // Có thể giữ lại UID/ProjectCode tùy ý
+        }
     }
 });

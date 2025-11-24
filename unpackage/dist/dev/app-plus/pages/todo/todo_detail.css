@@ -590,6 +590,30 @@ to {
   color: #555;
   line-height: 1.4;
 }
+.section-header-row[data-v-9f96c8fe] {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  margin-left: 5px;
+  margin-right: 5px;
+  /* Căn lề phải cho đẹp */
+}
+.section-title.no-margin[data-v-9f96c8fe] {
+  margin-bottom: 0;
+  /* Bỏ margin bottom cũ của title để căn giữa với picker */
+}
+.filter-badge[data-v-9f96c8fe] {
+  background-color: #e3f2fd;
+  /* Màu nền xanh nhạt */
+  color: #007aff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+}
 .loading-overlay[data-v-9f96c8fe] {
   position: fixed;
   top: 0;

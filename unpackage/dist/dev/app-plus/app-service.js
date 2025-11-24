@@ -1767,31 +1767,36 @@ This will fail in production if not fixed.`);
       });
     });
   };
+  const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1e3;
   const useAuthStore = defineStore("auth", {
-    // 1. STATE: Chứa dữ liệu (Giống data trong Vue)
+    // 1. STATE
     state: () => ({
       rootToken: uni.getStorageSync("vbot_root_token") || "",
+      // [MỚI] Lưu thời điểm lấy Root Token để tính hạn 7 ngày
+      rootLoginTime: uni.getStorageSync("vbot_root_login_time") || 0,
       todoToken: uni.getStorageSync("todo_access_token") || "",
       uid: uni.getStorageSync("vbot_uid") || "",
-      projectCode: uni.getStorageSync("vbot_project_code") || "",
-      tokenExpiry: uni.getStorageSync("token_expiry_time") || 0
+      projectCode: uni.getStorageSync("vbot_project_code") || ""
     }),
-    // 2. GETTERS: Tính toán dữ liệu (Giống computed)
+    // 2. GETTERS
     getters: {
       isLoggedIn: (state) => !!state.todoToken,
-      // Kiểm tra xem token còn hạn không
-      isValidToken: (state) => {
+      // [MỚI] Kiểm tra Root Token còn hạn 7 ngày không
+      isRootTokenValid: (state) => {
+        if (!state.rootToken || !state.rootLoginTime)
+          return false;
         const now2 = Date.now();
-        return state.todoToken && state.tokenExpiry && now2 < state.tokenExpiry;
+        return now2 - state.rootLoginTime < SEVEN_DAYS_MS;
       }
     },
-    // 3. ACTIONS: Xử lý logic (Giống methods)
+    // 3. ACTIONS
     actions: {
-      // Hàm này dùng để lưu cả vào State lẫn Storage (giữ đồng bộ)
       setAuthData(data) {
         if (data.rootToken) {
           this.rootToken = data.rootToken;
           uni.setStorageSync("vbot_root_token", data.rootToken);
+          this.rootLoginTime = Date.now();
+          uni.setStorageSync("vbot_root_login_time", this.rootLoginTime);
         }
         if (data.uid) {
           this.uid = data.uid;
@@ -1804,31 +1809,34 @@ This will fail in production if not fixed.`);
         if (data.todoToken) {
           this.todoToken = data.todoToken;
           uni.setStorageSync("todo_access_token", data.todoToken);
-          const expiresIn = 3600 * 1e3;
-          this.tokenExpiry = Date.now() + expiresIn;
-          uni.setStorageSync("token_expiry_time", this.tokenExpiry);
         }
       },
-      // Logic đổi Root Token lấy Todo Token
+      // Đổi Root Token lấy Todo Token
       async exchangeForTodoToken() {
         try {
-          formatAppLog("log", "at stores/auth.ts:55", "🔄 Store: Đang đổi Token Todo...");
+          if (!this.isRootTokenValid) {
+            formatAppLog("log", "at stores/auth.ts:70", "⚠️ Root Token hết hạn 7 ngày, cần đăng nhập lại.");
+            await this.loginDevMode();
+            return;
+          }
+          formatAppLog("log", "at stores/auth.ts:75", "🔄 Store: Đang dùng Root Token đổi Todo Token...");
           const todoToken = await getTodoToken(this.rootToken, this.projectCode, this.uid);
           this.setAuthData({ todoToken });
-          formatAppLog("log", "at stores/auth.ts:58", "✅ Store: Đã có Token Todo mới.");
+          formatAppLog("log", "at stores/auth.ts:78", "✅ Store: Đã lấy được Todo Token mới.");
         } catch (error) {
-          formatAppLog("error", "at stores/auth.ts:60", "❌ Store: Lỗi đổi token:", error);
+          formatAppLog("error", "at stores/auth.ts:80", "❌ Store: Lỗi đổi token:", error);
+          this.logout();
           throw error;
         }
       },
-      // Logic đăng nhập Dev (dùng cho localhost)
+      // Đăng nhập hệ thống (Lấy Root Token)
       async loginDevMode() {
         const devUser = "hoangtinvpm";
         const devPass = "ef797c8118f02dfb649607dd5d3f8c7623048c9c063d532cc95c5ed7a898a64f";
         const devUid = "87d90802634146e29721476337bce64b";
         const devProject = "PR202511211001129372";
         try {
-          formatAppLog("log", "at stores/auth.ts:78", "🛠 Store: Đang đăng nhập Dev...");
+          formatAppLog("log", "at stores/auth.ts:100", "🛠 Store: Đang gọi API đăng nhập hệ thống...");
           const loginData = await systemLogin(devUser, devPass);
           this.setAuthData({
             rootToken: loginData.access_token,
@@ -1837,36 +1845,32 @@ This will fail in production if not fixed.`);
           });
           await this.exchangeForTodoToken();
         } catch (error) {
-          formatAppLog("error", "at stores/auth.ts:91", "❌ Store: Đăng nhập Dev thất bại", error);
+          formatAppLog("error", "at stores/auth.ts:113", "❌ Store: Đăng nhập Dev thất bại", error);
         }
       },
-      // --- HÀM CHÍNH: App.vue sẽ gọi hàm này ---
+      // --- HÀM CHÍNH: Logic thông minh ---
       async initialize(options) {
-        formatAppLog("log", "at stores/auth.ts:97", "🚀 Store: Khởi tạo Auth...");
-        if (options && options.query && (options.query.token || options.query.access_token)) {
-          formatAppLog("log", "at stores/auth.ts:101", ">> Mode: Production (URL Detect)");
-          const rootToken = options.query.token || options.query.access_token;
-          const uid = options.query.uid;
-          const projectCode = options.query.projectCode;
-          this.setAuthData({ rootToken, uid, projectCode });
+        formatAppLog("log", "at stores/auth.ts:119", "🚀 Store: Khởi tạo Auth...");
+        if (this.todoToken) {
+          formatAppLog("log", "at stores/auth.ts:123", ">> ✅ Đã có Token Module cũ. Dùng luôn, không cần gọi API.");
+          return;
+        }
+        if (this.isRootTokenValid) {
+          formatAppLog("log", "at stores/auth.ts:130", ">> ⚠️ Mất Token Module, nhưng Root Token còn hạn. Đang lấy lại...");
           await this.exchangeForTodoToken();
           return;
         }
-        if (this.isValidToken) {
-          formatAppLog("log", "at stores/auth.ts:116", ">> Token cũ còn hạn, không cần làm gì.");
-          return;
-        }
-        formatAppLog("log", "at stores/auth.ts:121", ">> Mode: Dev / Expired Token");
+        formatAppLog("log", "at stores/auth.ts:136", ">> ❌ Root Token hết hạn hoặc chưa đăng nhập. Login lại...");
         await this.loginDevMode();
       },
       logout() {
-        formatAppLog("log", "at stores/auth.ts:125", "👋 Store: Đăng xuất, xóa Token...");
+        formatAppLog("log", "at stores/auth.ts:141", "👋 Store: Đăng xuất...");
         this.rootToken = "";
+        this.rootLoginTime = 0;
         this.todoToken = "";
-        this.tokenExpiry = 0;
         uni.removeStorageSync("todo_access_token");
-        uni.removeStorageSync("token_expiry_time");
         uni.removeStorageSync("vbot_root_token");
+        uni.removeStorageSync("vbot_root_login_time");
       }
     }
   });
@@ -2889,14 +2893,13 @@ This will fail in production if not fixed.`);
       }
     });
   };
-  const getCrmActionTimeline = (crmToken, customerUid) => {
+  const getCrmActionTimeline = (crmToken, customerUid, type = "ALL") => {
     return request({
-      // Ghép chuỗi URL với các tham số cố định như bạn yêu cầu
-      url: `${CRM_API_URL}/ActionTimeline/getAll?from=-1&to=-1&customerUid=${customerUid}&type=ALL&page=1&size=10&memberUid=&projectCode=`,
+      // Thay 'type=ALL' thành 'type=${type}'
+      url: `${CRM_API_URL}/ActionTimeline/getAll?from=-1&to=-1&customerUid=${customerUid}&type=${type}&page=1&size=10&memberUid=&projectCode=`,
       method: "GET",
       header: {
         "Authorization": `Bearer ${crmToken}`
-        // Dùng token CRM
       }
     });
   };
@@ -4060,10 +4063,34 @@ This will fail in production if not fixed.`);
     };
   };
   const useTodoDetailController = () => {
+    const authStore = useAuthStore();
     const isLoading = vue.ref(false);
     const isLoadingCustomer = vue.ref(false);
     const isLoadingHistory = vue.ref(false);
     const historyList = vue.ref([]);
+    const historyFilterIndex = vue.ref(0);
+    const historyFilterOptions = [
+      "Tất cả",
+      "Công việc",
+      "Ticket",
+      "Lịch sử gọi",
+      "Khách hàng",
+      "Ghi chú"
+    ];
+    const historyFilterValues = [
+      "ALL",
+      // Tất cả
+      "TODO",
+      // Công việc
+      "TICKET",
+      // Ticket
+      "HISTORY_CALL",
+      // Lịch sử gọi
+      "CUSTOMER",
+      // Khách hàng
+      "NOTE"
+      // Ghi chú
+    ];
     const form = vue.ref({
       // ... giữ nguyên
       id: "",
@@ -4101,7 +4128,7 @@ This will fail in production if not fixed.`);
         memberList.value = data;
         assigneeOptions.value = data.map((m) => m.UserName || "Thành viên ẩn danh");
       } catch (e) {
-        formatAppLog("error", "at controllers/todo_detail.ts:57", "Lỗi lấy members", e);
+        formatAppLog("error", "at controllers/todo_detail.ts:77", "Lỗi lấy members", e);
       }
     };
     const fetchDetail = async (id) => {
@@ -4123,7 +4150,7 @@ This will fail in production if not fixed.`);
           }
         }
       } catch (error) {
-        formatAppLog("error", "at controllers/todo_detail.ts:87", "❌ Lỗi lấy chi tiết:", error);
+        formatAppLog("error", "at controllers/todo_detail.ts:107", "❌ Lỗi lấy chi tiết:", error);
         uni.showToast({ title: "Lỗi kết nối", icon: "none" });
       } finally {
         isLoading.value = false;
@@ -4133,7 +4160,9 @@ This will fail in production if not fixed.`);
       var _a;
       isLoadingCustomer.value = true;
       try {
-        const crmToken = await getCrmToken(PROJECT_CODE, UID);
+        const crmToken = authStore.todoToken;
+        if (!crmToken)
+          return;
         const res = await getCrmCustomerDetail(crmToken, customerUid);
         const fields = res.fields || ((_a = res.data) == null ? void 0 : _a.fields) || [];
         const nameField = fields.find((f) => f.code === "name");
@@ -4154,7 +4183,7 @@ This will fail in production if not fixed.`);
           form.value.customerManagerName = manager ? manager.UserName : "(Chưa xác định)";
         }
       } catch (error) {
-        formatAppLog("error", "at controllers/todo_detail.ts:137", "Lỗi CRM:", error);
+        formatAppLog("error", "at controllers/todo_detail.ts:158", "Lỗi CRM:", error);
       } finally {
         isLoadingCustomer.value = false;
       }
@@ -4162,8 +4191,13 @@ This will fail in production if not fixed.`);
     const fetchHistoryLog = async (customerUid) => {
       isLoadingHistory.value = true;
       try {
-        const crmToken = await getCrmToken(PROJECT_CODE, UID);
-        const rawHistory = await getCrmActionTimeline(crmToken, customerUid);
+        const currentType = historyFilterValues[historyFilterIndex.value];
+        const crmToken = authStore.todoToken;
+        if (!crmToken) {
+          formatAppLog("error", "at controllers/todo_detail.ts:170", "Chưa có Token CRM/Todo");
+          return;
+        }
+        const rawHistory = await getCrmActionTimeline(crmToken, customerUid, currentType);
         if (Array.isArray(rawHistory)) {
           historyList.value = rawHistory.map((item) => {
             const date = new Date(item.createAt);
@@ -4189,9 +4223,15 @@ This will fail in production if not fixed.`);
           });
         }
       } catch (error) {
-        formatAppLog("error", "at controllers/todo_detail.ts:188", "Lỗi lấy lịch sử:", error);
+        formatAppLog("error", "at controllers/todo_detail.ts:213", "Lỗi lấy lịch sử:", error);
       } finally {
         isLoadingHistory.value = false;
+      }
+    };
+    const onHistoryFilterChange = (e) => {
+      historyFilterIndex.value = e.detail.value;
+      if (form.value.customerCode) {
+        fetchHistoryLog(form.value.customerCode);
       }
     };
     const onStatusChange = (e) => {
@@ -4211,7 +4251,7 @@ This will fail in production if not fixed.`);
       uni.navigateBack();
     };
     const saveTodo = () => {
-      formatAppLog("log", "at controllers/todo_detail.ts:205", "Lưu:", form.value);
+      formatAppLog("log", "at controllers/todo_detail.ts:239", "Lưu:", form.value);
       uni.showToast({ title: "Đã lưu", icon: "success" });
     };
     return {
@@ -4228,7 +4268,10 @@ This will fail in production if not fixed.`);
       onSourceChange,
       onAssigneeChange,
       goBack,
-      saveTodo
+      saveTodo,
+      historyFilterOptions,
+      historyFilterIndex,
+      onHistoryFilterChange
     };
   };
   const _sfc_main$1 = /* @__PURE__ */ vue.defineComponent({
@@ -4248,9 +4291,12 @@ This will fail in production if not fixed.`);
         onStatusChange,
         onSourceChange,
         onAssigneeChange,
-        saveTodo
+        saveTodo,
+        historyFilterOptions,
+        historyFilterIndex,
+        onHistoryFilterChange
       } = useTodoDetailController();
-      const __returned__ = { isLoading, isLoadingCustomer, isLoadingHistory, historyList, form, statusOptions, sourceOptions, assigneeOptions, onStatusChange, onSourceChange, onAssigneeChange, saveTodo, TodoEditor, TodoDatePicker };
+      const __returned__ = { isLoading, isLoadingCustomer, isLoadingHistory, historyList, form, statusOptions, sourceOptions, assigneeOptions, onStatusChange, onSourceChange, onAssigneeChange, saveTodo, historyFilterOptions, historyFilterIndex, onHistoryFilterChange, TodoEditor, TodoDatePicker };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
@@ -4467,7 +4513,23 @@ This will fail in production if not fixed.`);
             ])
           ]))
         ]),
-        vue.createElementVNode("view", { class: "section-title" }, "Lịch sử tương tác"),
+        vue.createElementVNode("view", { class: "section-header-row" }, [
+          vue.createElementVNode("text", { class: "section-title no-margin" }, "Lịch sử tương tác"),
+          vue.createElementVNode("picker", {
+            mode: "selector",
+            range: $setup.historyFilterOptions,
+            value: $setup.historyFilterIndex,
+            onChange: _cache[9] || (_cache[9] = (...args) => $setup.onHistoryFilterChange && $setup.onHistoryFilterChange(...args))
+          }, [
+            vue.createElementVNode(
+              "view",
+              { class: "filter-badge" },
+              vue.toDisplayString($setup.historyFilterOptions[$setup.historyFilterIndex]) + " ▾ ",
+              1
+              /* TEXT */
+            )
+          ], 40, ["range", "value"])
+        ]),
         vue.createElementVNode("view", { class: "history-container" }, [
           $setup.isLoadingHistory ? (vue.openBlock(), vue.createElementBlock("view", {
             key: 0,
@@ -4478,7 +4540,7 @@ This will fail in production if not fixed.`);
             key: 1,
             class: "empty-row"
           }, [
-            vue.createElementVNode("text", null, "(Chưa có lịch sử tương tác nào)")
+            vue.createElementVNode("text", null, "(Không tìm thấy dữ liệu)")
           ])) : (vue.openBlock(), vue.createElementBlock("view", {
             key: 2,
             class: "timeline-list"

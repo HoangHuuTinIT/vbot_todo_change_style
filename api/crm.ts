@@ -89,13 +89,13 @@ export const getCrmCustomerDetail = (crmToken: string, customerUid: string): Pro
     });
 };
 
-export const getCrmActionTimeline = (crmToken: string, customerUid: string): Promise<any[]> => {
+export const getCrmActionTimeline = (crmToken: string, customerUid: string, type: string = 'ALL'): Promise<any[]> => {
     return request({
-        // Ghép chuỗi URL với các tham số cố định như bạn yêu cầu
-        url: `${CRM_API_URL}/ActionTimeline/getAll?from=-1&to=-1&customerUid=${customerUid}&type=ALL&page=1&size=10&memberUid=&projectCode=`,
+        // Thay 'type=ALL' thành 'type=${type}'
+        url: `${CRM_API_URL}/ActionTimeline/getAll?from=-1&to=-1&customerUid=${customerUid}&type=${type}&page=1&size=10&memberUid=&projectCode=`,
         method: 'GET',
         header: {
-            'Authorization': `Bearer ${crmToken}` // Dùng token CRM
+            'Authorization': `Bearer ${crmToken}`
         }
     });
 };
