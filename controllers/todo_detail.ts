@@ -1,7 +1,7 @@
 // src/controllers/todo_detail.ts
 import { ref , nextTick } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
-import { getTodoDetail , getTodoMessages , createTodoMessage ,deleteTodoMessage , getTodoMessageDetail, updateTodoMessage,} from '@/api/todo';
+import { getTodoDetail , getTodoMessages , createTodoMessage ,deleteTodoMessage , getTodoMessageDetail, updateTodoMessage,reactionTodoMessage} from '@/api/todo';
 import { getAllMembers } from '@/api/project';
 import {  getCrmCustomerDetail , getCrmActionTimeline} from '@/api/crm'; // Import API CRM
 import { mapTodoDetailToForm, type TodoDetailForm } from '@/models/todo_detail';
@@ -53,6 +53,64 @@ export const useTodoDetailController = () => {
 	const editingMemberName = ref('');
 	    const isConfirmCancelEditOpen = ref(false); // Modal xác nhận hủy sửa
 	    // Lưu tạm thông tin bình luận đang sửa để lát gửi lại API update
+	
+	const isEmojiPickerOpen = ref(false);
+	const currentReactingComment = ref<any>(null);
+	const emojiList = ['👍', '👎', '😍', '😆', '😱', '😭', '😤'];
+	
+	    // 1. Mở Picker
+	    const onToggleEmojiPicker = (commentItem: any) => {
+	        currentReactingComment.value = commentItem;
+	        isEmojiPickerOpen.value = true;
+	    };
+	
+	    // 2. Đóng Picker
+	    const closeEmojiPicker = () => {
+	        isEmojiPickerOpen.value = false;
+	        currentReactingComment.value = null;
+	    };
+	
+	    // 3. Chọn Emoji (Xử lý API sau)
+	        const selectEmoji = async (emoji: string) => {
+	            // Kiểm tra xem có đang chọn comment nào không
+	            if (!currentReactingComment.value) return;
+	    
+	            // [QUAN TRỌNG] Lấy ID tin nhắn TRƯỚC KHI đóng modal (vì đóng modal sẽ reset biến này về null)
+	            const messageId = currentReactingComment.value.id; 
+	    
+	            // Đóng modal ngay cho giao diện mượt
+	            closeEmojiPicker();
+	    
+	            // Chuẩn bị dữ liệu
+	            const todoId = form.value.id;          // ID của công việc hiện tại
+	            const senderId = authStore.uid;        // ID của người đang thả tim (chính mình)
+	            
+	            // Payload theo yêu cầu
+	            const payload = {
+	                todoId: Number(todoId),      // Đảm bảo là số nếu API yêu cầu số
+	                senderId: senderId,
+	                todoMessageId: Number(messageId), // Dùng biến messageId đã lấy ở trên
+	                codeEmoji: emoji
+	            };
+	    
+	            console.log(">> Gửi Reaction:", payload);
+	    
+	            try {
+	                // Gọi API
+	                const res = await reactionTodoMessage(payload);
+	                
+	                // Kiểm tra kết quả
+	                if (res) {
+	                    uni.showToast({ title: 'Đã thả cảm xúc', icon: 'none' });
+	                    
+	                    // Gọi lại API lấy danh sách comment để cập nhật giao diện mới nhất
+	                    await fetchComments(todoId);
+	                }
+	            } catch (error) {
+	                console.error("Lỗi thả cảm xúc:", error);
+	                uni.showToast({ title: 'Lỗi kết nối', icon: 'none' });
+	            }
+	        };
 	    const editingCommentData = ref<{
 	        id: number;
 	        todoId: number;
@@ -572,5 +630,12 @@ const fetchHistoryLog = async (customerUid: string) => {
 		continueEditing,
 		confirmCancelEdit,
 		editingMemberName,
+		
+		isEmojiPickerOpen,
+		emojiList,
+		onToggleEmojiPicker,
+		closeEmojiPicker,
+		selectEmoji,
+		
     };
 };

@@ -930,6 +930,40 @@ to {
   color: #d48806;
   /* Màu chữ cam đậm */
 }
+.emoji-picker-container[data-v-9f96c8fe] {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  /* Căn giữa hoặc hiển thị gần chỗ bấm tùy chỉnh sau */
+  width: 80%;
+  max-width: 300px;
+  animation: popIn 0.2s ease-out;
+}
+.emoji-grid[data-v-9f96c8fe] {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.emoji-item[data-v-9f96c8fe] {
+  font-size: 28px;
+  padding: 5px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+.emoji-item[data-v-9f96c8fe]:active {
+  transform: scale(1.2);
+}
+
+/* Cập nhật lại action container để chứa nút emoji */
+.action-buttons-container[data-v-9f96c8fe] {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  /* Đẩy sang phải */
+  margin-left: auto;
+}
 .loading-overlay[data-v-9f96c8fe] {
   position: fixed;
   top: 0;

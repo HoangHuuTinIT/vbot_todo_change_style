@@ -103,18 +103,22 @@
 			                                           </view>
 			                                       </view>
 			 
-			                                     <view 
-			                                         v-if="item.id && String(item.senderId) === String(currentUserId)" 
-			                                         class="action-buttons-container"
-			                                     >
-			                                         <view class="btn-icon-action" @click="onRequestEditComment(item.id)">
-			                                             <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
+			                                     <view class="action-buttons-container">
+			                                             
+			                                             <view class="btn-icon-action" @click="onToggleEmojiPicker(item)">
+			                                                 <image src="https://img.icons8.com/ios/50/999999/happy--v1.png" class="icon-action"></image>
+			                                             </view>
+			                                     
+			                                             <template v-if="item.id && String(item.senderId) === String(currentUserId)">
+			                                                 <view class="btn-icon-action" @click="onRequestEditComment(item.id)">
+			                                                     <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
+			                                                 </view>
+			                                     
+			                                                 <view class="btn-icon-action" @click="onRequestDeleteComment(item.id)">
+			                                                     <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
+			                                                 </view>
+			                                             </template>
 			                                         </view>
-			 
-			                                         <view class="btn-icon-action" @click="onRequestDeleteComment(item.id)">
-			                                             <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
-			                                         </view>
-			                                     </view>
 			                                 </view>
 			                             </view>
 			                         </view>
@@ -144,19 +148,24 @@
 			                                                     </view>
 			                                                 </view>
 			                                             </view>
-			 
-			                                         <view 
-			                                             v-if="child.id && String(child.senderId) === String(currentUserId)" 
-			                                             class="action-buttons-container"
-			                                         >
-			                                             <view class="btn-icon-action" @click="onRequestEditComment(child.id)">
-			                                                 <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
+															
+			                                         <view class="action-buttons-container">
+			                                                 
+			                                                 <view class="btn-icon-action" @click="onToggleEmojiPicker(child)">
+			                                                     <image src="https://img.icons8.com/ios/50/999999/happy--v1.png" class="icon-action"></image>
+			                                                 </view>
+			                                         
+			                                                 <template v-if="child.id && String(child.senderId) === String(currentUserId)">
+			                                                     <view class="btn-icon-action" @click="onRequestEditComment(child.id)">
+			                                                         <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
+			                                                     </view>
+			                                         
+			                                                     <view class="btn-icon-action" @click="onRequestDeleteComment(child.id)">
+			                                                         <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
+			                                                     </view>
+			                                                 </template>
+			                                                 
 			                                             </view>
-			 
-			                                             <view class="btn-icon-action" @click="onRequestDeleteComment(child.id)">
-			                                                 <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
-			                                             </view>
-			                                         </view>
 			                                     </view>
 			                                 </view>
 			                             </view>
@@ -200,7 +209,20 @@
 			                    </view>
 			                </view>
 			            </view>
-
+						<view class="modal-overlay" v-if="isEmojiPickerOpen" @click="closeEmojiPicker">
+						            <view class="emoji-picker-container" @click.stop>
+						                <view class="emoji-grid">
+						                    <view 
+						                        v-for="(emoji, index) in emojiList" 
+						                        :key="index" 
+						                        class="emoji-item"
+						                        @click="selectEmoji(emoji)"
+						                    >
+						                        {{ emoji }}
+						                    </view>
+						                </view>
+						            </view>
+						        </view>
             <!-- THÔNG TIN CÔNG VIỆC -->
             <view class="section-title">Thông tin công việc</view>
             <view class="info-group">
@@ -382,6 +404,12 @@
 		isEditingComment, onRequestEditComment, submitUpdateComment, onCancelEditComment,
 		        isConfirmCancelEditOpen, continueEditing, confirmCancelEdit,
 				editingMemberName,
+				
+				isEmojiPickerOpen,
+				        emojiList,
+				        onToggleEmojiPicker,
+				        closeEmojiPicker,
+				        selectEmoji
     } = useTodoDetailController();
 </script>
 
@@ -712,6 +740,43 @@
 		.editing-text {
 		    font-size: 13px;
 		    color: #d48806; /* Màu chữ cam đậm */
+		}
+		.emoji-picker-container {
+		    background-color: #fff;
+		    border-radius: 12px;
+		    padding: 15px;
+		    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+		    /* Căn giữa hoặc hiển thị gần chỗ bấm tùy chỉnh sau */
+		    width: 80%; 
+		    max-width: 300px;
+		    animation: popIn 0.2s ease-out;
+		}
+		
+		.emoji-grid {
+		    display: flex;
+		    justify-content: space-between;
+		    flex-wrap: wrap;
+		    gap: 10px;
+		}
+		
+		.emoji-item {
+		    font-size: 28px;
+		    padding: 5px;
+		    cursor: pointer;
+		    transition: transform 0.1s;
+		}
+		
+		.emoji-item:active {
+		    transform: scale(1.2);
+		}
+		
+		/* Cập nhật lại action container để chứa nút emoji */
+		.action-buttons-container {
+		    display: flex;
+		    gap: 15px;
+		    align-items: center;
+		    /* Đẩy sang phải */
+		    margin-left: auto; 
 		}
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; color: #007aff; font-weight: bold; }
 </style>

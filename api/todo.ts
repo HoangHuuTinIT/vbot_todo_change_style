@@ -122,3 +122,11 @@ export const updateTodoMessage = (data: any): Promise<any> => {
         data: data
     });
 };
+
+export const reactionTodoMessage = (data: any): Promise<any> => {
+    return request({
+        url: `${SERVER_BASE_URL}/api/module-todo/todoMessages/reaction`,
+        method: 'POST',
+        data: data
+    });
+};
