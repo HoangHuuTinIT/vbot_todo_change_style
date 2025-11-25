@@ -14,10 +14,12 @@ interface CommentItem {
 	senderId: string | number;
     senderName: string;
     senderAvatarChar: string; // Chữ cái đầu
+	senderAvatarColor: string;
     message: string; // HTML content
     timeDisplay: string;
     actionText: string; // "thêm 1 bình luận"
     isEdited: boolean;
+	type: string;
     reactions: any[]; // Mảng emoji
     children: CommentItem[]; // Bình luận con (Replies)
 }
@@ -51,12 +53,110 @@ export const useTodoDetailController = () => {
 	
 	const isEditingComment = ref(false); // Đang ở chế độ sửa hay không
 	const editingMemberName = ref('');
-	    const isConfirmCancelEditOpen = ref(false); // Modal xác nhận hủy sửa
+	const isConfirmCancelEditOpen = ref(false); // Modal xác nhận hủy sửa
 	    // Lưu tạm thông tin bình luận đang sửa để lát gửi lại API update
+	const isReplying = ref(false); // Trạng thái đang trả lời
+	const isConfirmCancelReplyOpen = ref(false); // Modal hủy trả lời
+	const replyingCommentData = ref<any>(null); // Lưu object comment đang được trả lời
+	const replyingMemberName = ref(''); // Tên người được trả lời
 	
 	const isEmojiPickerOpen = ref(false);
 	const currentReactingComment = ref<any>(null);
 	const emojiList = ['👍', '👎', '😍', '😆', '😱', '😭', '😤'];
+	
+	
+	const onRequestReply = async (item: any) => {
+	        // Reset các trạng thái khác nếu đang dở (ví dụ đang sửa)
+	        isEditingComment.value = false; 
+	        editingCommentData.value = null;
+	        newCommentText.value = ''; // Reset text cũ
+	
+	        // Lưu dữ liệu comment đang được trả lời
+	        replyingCommentData.value = item;
+	        isReplying.value = true;
+	
+	        // Tìm tên người được trả lời (Logic giống phần Edit)
+	        const senderId = item.senderId;
+	        const foundMember = memberList.value.find(m => m.UID === senderId);
+	        if (foundMember) {
+	            replyingMemberName.value = foundMember.UserName;
+	        } else {
+	            replyingMemberName.value = 'Người dùng ẩn'; 
+	        }
+	
+	        // Focus vào ô nhập liệu (Cần nextTick để UI kịp render)
+	        await nextTick();
+	        // Nếu cần scroll xuống ô input thì xử lý ở đây (tùy chọn)
+	    };
+	
+	    // 2. Nhấn "Hủy" -> Mở modal xác nhận
+	    const onCancelReply = () => {
+	        // Nếu chưa nhập gì thì hủy luôn cho nhanh
+	        if (!newCommentText.value.trim()) {
+	            confirmCancelReply();
+	        } else {
+	            isConfirmCancelReplyOpen.value = true;
+	        }
+	    };
+	
+	    // 3. Xác nhận hủy trong modal
+	    const confirmCancelReply = () => {
+	        isConfirmCancelReplyOpen.value = false;
+	        resetReplyState();
+	    };
+	
+	    // 4. Tiếp tục trả lời (Đóng modal)
+	    const continueReplying = () => {
+	        isConfirmCancelReplyOpen.value = false;
+	    };
+	
+	    // 5. Gửi trả lời (Gọi API Create)
+	    const submitReply = async () => {
+	        if (!newCommentText.value || !newCommentText.value.trim()) {
+	            uni.showToast({ title: 'Vui lòng nhập nội dung', icon: 'none' });
+	            return;
+	        }
+	        if (!replyingCommentData.value) return;
+	
+	        isSubmittingComment.value = true;
+	
+	        try {
+	            const todoId = form.value.id;
+	            const senderId = authStore.uid;
+	            
+	            // Payload trả lời (parentId là ID của comment gốc)
+	            const payload = {
+	                todoId: todoId,
+	                senderId: senderId,
+	                message: newCommentText.value,
+	                files: "",
+	                parentId: replyingCommentData.value.id // <--- QUAN TRỌNG: ID của comment cha
+	            };
+	
+	            console.log(">> Gửi trả lời:", payload);
+	
+	            const res = await createTodoMessage(payload);
+	
+	            if (res) {
+	                uni.showToast({ title: 'Đã trả lời', icon: 'success' });
+	                resetReplyState();
+	                await fetchComments(todoId);
+	            }
+	        } catch (error) {
+	            console.error("Lỗi gửi trả lời:", error);
+	            uni.showToast({ title: 'Gửi thất bại', icon: 'none' });
+	        } finally {
+	            isSubmittingComment.value = false;
+	        }
+	    };
+	
+	    // Hàm reset trạng thái reply
+	    const resetReplyState = () => {
+	        isReplying.value = false;
+	        replyingCommentData.value = null;
+	        replyingMemberName.value = '';
+	        newCommentText.value = '';
+	    };
 	
 	    // 1. Mở Picker
 	    const onToggleEmojiPicker = (commentItem: any) => {
@@ -416,21 +516,25 @@ const processCommentData = (item: any): CommentItem => {
         // 1. Map Sender Info
         let senderName = 'Người dùng ẩn';
         let avatarChar = '?';
-        
+        let avatarColor = '#e3f2fd';
         if (item.senderId) {
-            // Tìm trong memberList (đã load từ trước)
-            // Lưu ý: memberList API trả về UID, so sánh với senderId
-            const member = memberList.value.find(m => m.UID === item.senderId || m.memberUID === item.senderId);
-            if (member) {
-                senderName = member.UserName;
+                // Tìm trong memberList
+                const member = memberList.value.find(m => m.UID === item.senderId || m.memberUID === item.senderId);
+                if (member) {
+                    senderName = member.UserName;
+                    // Lấy màu từ API, nếu không có thì giữ màu mặc định
+                    if (member.AvatarColor) {
+                        avatarColor = member.AvatarColor;
+                    }
+                }
             }
-        }
         avatarChar = senderName.charAt(0).toUpperCase();
 
         // 2. Xử lý hành động
         let actionText = '';
         if (item.type === 'COMMENT') actionText = 'đã thêm một bình luận';
         else if (item.type === 'LOG') actionText = 'đã cập nhật hoạt động';
+		else if (item.type==='UPDATE_TODO') actionText = 'cập nhật thông tin công việc';
         
         // 3. Xử lý Reactions
         const reactionList = item.reactions?.details || [];
@@ -440,10 +544,12 @@ const processCommentData = (item: any): CommentItem => {
 			senderId: item.senderId,
             senderName,
             senderAvatarChar: avatarChar,
+			senderAvatarColor: avatarColor,
             message: item.message || '',
             timeDisplay: formatRelativeTime(item.createdAt),
             actionText,
             isEdited: !!item.updatedAt, // Nếu có updatedAt thì là đã sửa
+			type: item.type,
             reactions: reactionList,
             children: [] // Sẽ map đệ quy nếu cần
         };
@@ -637,5 +743,15 @@ const fetchHistoryLog = async (customerUid: string) => {
 		closeEmojiPicker,
 		selectEmoji,
 		
+		
+		isReplying,
+		isConfirmCancelReplyOpen,
+		replyingCommentData,
+		replyingMemberName,
+		onRequestReply,
+		onCancelReply,
+		confirmCancelReply,
+		continueReplying,
+		submitReply,
     };
 };

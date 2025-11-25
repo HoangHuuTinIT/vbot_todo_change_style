@@ -638,18 +638,28 @@ to {
   width: 40px;
   height: 40px;
   background-color: #e3f2fd;
-  /* Xanh nhạt */
+  /* Màu fallback nếu style lỗi */
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 12px;
   flex-shrink: 0;
+  /* Thêm transition cho mượt */
+  transition: background-color 0.3s ease;
 }
+
+/* Sửa màu chữ mặc định hoặc dùng class riêng */
 .avatar-char[data-v-9f96c8fe] {
   color: #1976d2;
+  /* Màu cũ */
   font-weight: bold;
   font-size: 18px;
+}
+
+/* Class mới cho chữ màu trắng nổi bật trên nền màu đậm */
+.white-text[data-v-9f96c8fe] {
+  color: #ffffff !important;
 }
 
 /* Small Avatar for Replies */
@@ -963,6 +973,48 @@ to {
   align-items: center;
   /* Đẩy sang phải */
   margin-left: auto;
+}
+.reply-alert[data-v-9f96c8fe] {
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  background-color: #e6f7ff;
+  /* Màu xanh nhạt đặc trưng cho reply */
+  border-radius: 8px;
+  border-left: 4px solid #1890ff;
+}
+.reply-info[data-v-9f96c8fe] {
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+.reply-label[data-v-9f96c8fe] {
+  color: #666;
+}
+.reply-name[data-v-9f96c8fe] {
+  font-weight: bold;
+  color: #1890ff;
+}
+.reply-quote[data-v-9f96c8fe] {
+  font-style: italic;
+  color: #555;
+  font-size: 13px;
+  background-color: rgba(255, 255, 255, 0.6);
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  /* Giới hạn 2 dòng */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.quote-icon[data-v-9f96c8fe] {
+  font-size: 16px;
+  color: #999;
+  font-weight: bold;
+}
+
+/* Giới hạn nội dung trong quote để không bị vỡ layout */
+.quote-content[data-v-9f96c8fe] {
+  display: inline;
 }
 .loading-overlay[data-v-9f96c8fe] {
   position: fixed;
