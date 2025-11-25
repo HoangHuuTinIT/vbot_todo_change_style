@@ -19,7 +19,7 @@ const dateToTimestamp = (dateStr: string): number => (!dateStr ? -1 : new Date(d
 // --- PUBLIC MODELS ---
 
 // Note: Params lọc có thể định nghĩa Interface riêng nếu muốn kỹ hơn
-export const buildTodoParams = (filter: any, statusValue: string, sourceValue: string) => {
+export const buildTodoParams = (filter: any, statusValue: string, sourceValue: string , creatorId: string,assigneeId: string) => {
     return {
         keySearch: filter.title || '',
         code: filter.jobCode || '',
@@ -34,8 +34,10 @@ export const buildTodoParams = (filter: any, statusValue: string, sourceValue: s
         customerCode: '',
         groupId: '',
         transId: '',
-        createdBy: '',
-        assigneeId: '',
+		createdBy: creatorId || '', 
+		assigneeId: assigneeId || '',
+        // createdBy: '',
+        // assigneeId: '',
         pluginType: '',
         links: sourceValue || ''
     };

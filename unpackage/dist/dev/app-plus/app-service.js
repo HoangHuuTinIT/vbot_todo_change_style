@@ -1971,7 +1971,7 @@ This will fail in production if not fixed.`);
     return `${d}/${m}/${y} ${h}:${min}:${s}`;
   };
   const dateToTimestamp$1 = (dateStr) => !dateStr ? -1 : new Date(dateStr).getTime();
-  const buildTodoParams = (filter, statusValue, sourceValue) => {
+  const buildTodoParams = (filter, statusValue, sourceValue, creatorId, assigneeId) => {
     return {
       keySearch: filter.title || "",
       code: filter.jobCode || "",
@@ -1983,8 +1983,10 @@ This will fail in production if not fixed.`);
       customerCode: "",
       groupId: "",
       transId: "",
-      createdBy: "",
-      assigneeId: "",
+      createdBy: creatorId || "",
+      assigneeId: assigneeId || "",
+      // createdBy: '',
+      // assigneeId: '',
       pluginType: "",
       links: sourceValue || ""
     };
@@ -2111,6 +2113,35 @@ This will fail in production if not fixed.`);
       data
     });
   };
+  const getAllMembers = () => {
+    const authStore = useAuthStore();
+    const { rootToken, projectCode } = authStore;
+    return new Promise((resolve, reject) => {
+      uni.request({
+        url: `${PROJECT_API_URL}/getAllMember`,
+        method: "GET",
+        data: {
+          projectCode,
+          status: "all"
+        },
+        header: {
+          "Authorization": `Bearer ${rootToken}`,
+          "Content-Type": "application/json"
+        },
+        success: (res) => {
+          const body = res.data;
+          if (body.status === 1 && body.data) {
+            resolve(body.data);
+          } else {
+            reject(body.message || "Lỗi lấy danh sách thành viên");
+          }
+        },
+        fail: (err) => {
+          reject(err);
+        }
+      });
+    });
+  };
   const useListTodoController = () => {
     const todos = vue.ref([]);
     const isLoading = vue.ref(false);
@@ -2120,11 +2151,12 @@ This will fail in production if not fixed.`);
     const statusOptions = ["Tất cả", STATUS_LABELS[TODO_STATUS.NEW], STATUS_LABELS[TODO_STATUS.IN_PROGRESS], STATUS_LABELS[TODO_STATUS.DONE]];
     const statusValues = ["", TODO_STATUS.NEW, TODO_STATUS.IN_PROGRESS, TODO_STATUS.DONE];
     const statusIndex = vue.ref(0);
-    const creatorOptions = ["Tất cả", "Nguyễn Văn A", "Trần Thị B", "Admin"];
+    const rawMemberList = vue.ref([]);
+    const creatorOptions = vue.ref(["Tất cả"]);
     const creatorIndex = vue.ref(0);
     const customerOptions = ["Tất cả", "KH001", "KH002", "VNG"];
     const customerIndex = vue.ref(0);
-    const assigneeOptions = ["Tất cả", "User 1", "User 2"];
+    const assigneeOptions = vue.ref(["Tất cả"]);
     const assigneeIndex = vue.ref(0);
     const sourceOptions = ["Tất cả", "Cuộc gọi (CALL)", "Khách hàng (CUSTOMER)", "Hội thoại (CONVERSATION)", "Tin nhắn (CHAT_MESSAGE)"];
     const sourceValues = ["", TODO_SOURCE.CALL, TODO_SOURCE.CUSTOMER, TODO_SOURCE.CONVERSATION, TODO_SOURCE.CHAT_MESSAGE];
@@ -2148,13 +2180,38 @@ This will fail in production if not fixed.`);
       const size = pageSizeValues[pageSizeIndex.value];
       return Math.ceil(totalItems.value / size);
     });
+    const fetchFilterMembers = async () => {
+      if (rawMemberList.value.length > 0)
+        return;
+      try {
+        const data = await getAllMembers();
+        rawMemberList.value = data;
+        const names = data.map((m) => m.UserName || "Thành viên ẩn");
+        creatorOptions.value = ["Tất cả", ...names];
+        assigneeOptions.value = ["Tất cả", ...names];
+      } catch (error) {
+        formatAppLog("error", "at controllers/list_todo.ts:72", "Lỗi lấy danh sách thành viên filter:", error);
+      }
+    };
     const getTodoList = async () => {
       isLoading.value = true;
       try {
+        let selectedCreatorId = "";
+        if (creatorIndex.value > 0) {
+          selectedCreatorId = rawMemberList.value[creatorIndex.value - 1].UID;
+        }
+        let selectedAssigneeId = "";
+        if (assigneeIndex.value > 0) {
+          selectedAssigneeId = rawMemberList.value[assigneeIndex.value - 1].memberUID;
+        }
         const filterParams = buildTodoParams(
           filter.value,
           statusValues[statusIndex.value],
-          sourceValues[sourceIndex.value]
+          sourceValues[sourceIndex.value],
+          selectedCreatorId,
+          // Truyền ID người tạo
+          selectedAssigneeId
+          // Truyền ID người được giao
         );
         const currentSize = pageSizeValues[pageSizeIndex.value];
         const [listData, countData] = await Promise.all([
@@ -2168,7 +2225,7 @@ This will fail in production if not fixed.`);
         todos.value = listData || [];
         totalItems.value = countData || 0;
       } catch (error) {
-        formatAppLog("error", "at controllers/list_todo.ts:82", error);
+        formatAppLog("error", "at controllers/list_todo.ts:117", error);
         uni.showToast({ title: "Lỗi tải dữ liệu", icon: "none" });
       } finally {
         isLoading.value = false;
@@ -2204,7 +2261,7 @@ This will fail in production if not fixed.`);
         itemToDelete.value = null;
         getTodoList();
       } catch (error) {
-        formatAppLog("error", "at controllers/list_todo.ts:117", "Delete Error:", error);
+        formatAppLog("error", "at controllers/list_todo.ts:152", "Delete Error:", error);
         uni.showToast({ title: "Xóa thất bại", icon: "none" });
       }
     };
@@ -2223,6 +2280,7 @@ This will fail in production if not fixed.`);
     };
     const openFilter = () => {
       isFilterOpen.value = true;
+      fetchFilterMembers();
     };
     const closeFilter = () => {
       isFilterOpen.value = false;
@@ -2292,12 +2350,12 @@ This will fail in production if not fixed.`);
       creatorOptions,
       creatorIndex,
       onCreatorChange,
-      customerOptions,
-      customerIndex,
-      onCustomerChange,
       assigneeOptions,
       assigneeIndex,
       onAssigneeChange,
+      customerOptions,
+      customerIndex,
+      onCustomerChange,
       sourceOptions,
       sourceIndex,
       onSourceChange,
@@ -2793,35 +2851,6 @@ This will fail in production if not fixed.`);
     ]);
   }
   const PagesTodoListTodo = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-1b4e60ea"], ["__file", "D:/uni_app/vbot_todo_3/pages/todo/list_todo.vue"]]);
-  const getAllMembers = () => {
-    const authStore = useAuthStore();
-    const { rootToken, projectCode } = authStore;
-    return new Promise((resolve, reject) => {
-      uni.request({
-        url: `${PROJECT_API_URL}/getAllMember`,
-        method: "GET",
-        data: {
-          projectCode,
-          status: "all"
-        },
-        header: {
-          "Authorization": `Bearer ${rootToken}`,
-          "Content-Type": "application/json"
-        },
-        success: (res) => {
-          const body = res.data;
-          if (body.status === 1 && body.data) {
-            resolve(body.data);
-          } else {
-            reject(body.message || "Lỗi lấy danh sách thành viên");
-          }
-        },
-        fail: (err) => {
-          reject(err);
-        }
-      });
-    });
-  };
   const dateToTimestamp = (dateStr) => {
     if (!dateStr)
       return -1;

@@ -6,7 +6,7 @@ import { TODO_STATUS, STATUS_LABELS } from '@/utils/constants';
 import { buildTodoParams } from '@/models/todo'; // Import từ .ts
 import { TODO_SOURCE } from '@/utils/enums';
 import type { TodoItem } from '@/types/todo';
-
+import { getAllMembers } from '@/api/project';
 export const useListTodoController = () => {
     // --- STATE CƠ BẢN ---
     // Định nghĩa rõ mảng chứa các TodoItem
@@ -22,12 +22,13 @@ export const useListTodoController = () => {
     const statusValues = ['', TODO_STATUS.NEW, TODO_STATUS.IN_PROGRESS, TODO_STATUS.DONE];
     const statusIndex = ref<number>(0);
 
+	const rawMemberList = ref<any[]>([]);
     // ... (Giữ nguyên creatorOptions, customerOptions...)
-    const creatorOptions = ['Tất cả', 'Nguyễn Văn A', 'Trần Thị B', 'Admin'];
+    const creatorOptions = ref(['Tất cả']); // Mặc định có 'Tất cả'
     const creatorIndex = ref(0);
     const customerOptions = ['Tất cả', 'KH001', 'KH002', 'VNG'];
     const customerIndex = ref(0);
-    const assigneeOptions = ['Tất cả', 'User 1', 'User 2'];
+    const assigneeOptions = ref(['Tất cả']); // Mặc định có 'Tất cả'
     const assigneeIndex = ref(0);
 
     // Source Enum
@@ -53,38 +54,72 @@ export const useListTodoController = () => {
         const size = pageSizeValues[pageSizeIndex.value];
         return Math.ceil(totalItems.value / size);
     });
+const fetchFilterMembers = async () => {
+        // Nếu đã có dữ liệu rồi thì thôi, không gọi lại để đỡ lag
+        if (rawMemberList.value.length > 0) return;
 
-    // --- METHODS ---
-    const getTodoList = async () => {
-        isLoading.value = true;
         try {
-            const filterParams = buildTodoParams(
-                filter.value, 
-                statusValues[statusIndex.value],
-                sourceValues[sourceIndex.value]
-            );
-            
-            const currentSize = pageSizeValues[pageSizeIndex.value];
-            
-            // Vì getTodos và getTodoCount đã trả về Promise đúng kiểu, code này an toàn
-            const [listData, countData] = await Promise.all([
-                getTodos({ 
-                    ...filterParams, 
-                    pageNo: currentPage.value, 
-                    pageSize: currentSize 
-                }),
-                getTodoCount(filterParams)
-            ]);
+            const data = await getAllMembers();
+            rawMemberList.value = data;
 
-            todos.value = listData || [];
-            totalItems.value = countData || 0;
+            // Tạo danh sách tên để hiển thị trong Picker
+            // Thêm 'Tất cả' vào đầu
+            const names = data.map(m => m.UserName || 'Thành viên ẩn');
+            creatorOptions.value = ['Tất cả', ...names];
+            assigneeOptions.value = ['Tất cả', ...names];
+
         } catch (error) {
-            console.error(error);
-            uni.showToast({ title: 'Lỗi tải dữ liệu', icon: 'none' });
-        } finally {
-            isLoading.value = false;
+            console.error('Lỗi lấy danh sách thành viên filter:', error);
         }
     };
+    // --- METHODS ---
+    const getTodoList = async () => {
+            isLoading.value = true;
+            try {
+                // [MỚI] Tính toán ID dựa trên Index đang chọn
+                // Index 0 là "Tất cả" -> ID rỗng
+                // Index 1 tương ứng với rawMemberList[0]
+                
+                let selectedCreatorId = '';
+                if (creatorIndex.value > 0) {
+                    // Người tạo thường dùng UID
+                    selectedCreatorId = rawMemberList.value[creatorIndex.value - 1].UID;
+                }
+    
+                let selectedAssigneeId = '';
+                if (assigneeIndex.value > 0) {
+                    // Người được giao thường dùng memberUID
+                    selectedAssigneeId = rawMemberList.value[assigneeIndex.value - 1].memberUID;
+                }
+    
+                const filterParams = buildTodoParams(
+                    filter.value, 
+                    statusValues[statusIndex.value],
+                    sourceValues[sourceIndex.value],
+                    selectedCreatorId, // Truyền ID người tạo
+                    selectedAssigneeId // Truyền ID người được giao
+                );
+                
+                const currentSize = pageSizeValues[pageSizeIndex.value];
+                
+                const [listData, countData] = await Promise.all([
+                    getTodos({ 
+                        ...filterParams, 
+                        pageNo: currentPage.value, 
+                        pageSize: currentSize 
+                    }),
+                    getTodoCount(filterParams)
+                ]);
+    
+                todos.value = listData || [];
+                totalItems.value = countData || 0;
+            } catch (error) {
+                console.error(error);
+                uni.showToast({ title: 'Lỗi tải dữ liệu', icon: 'none' });
+            } finally {
+                isLoading.value = false;
+            }
+        };
 
     const onPageSizeChange = (e: any) => {
         pageSizeIndex.value = e.detail.value;
@@ -131,7 +166,10 @@ export const useListTodoController = () => {
 
     // ... (Các hàm UI Actions giữ nguyên logic, chỉ thêm : any vào event nếu cần)
     const addNewTask = () => { uni.navigateTo({ url: '/pages/todo/create_todo' }); };
-    const openFilter = () => { isFilterOpen.value = true; };
+   const openFilter = () => { 
+           isFilterOpen.value = true; 
+           fetchFilterMembers(); 
+       };
     const closeFilter = () => { isFilterOpen.value = false; };
     
     const onStatusChange = (e: any) => { statusIndex.value = e.detail.value; };
@@ -172,9 +210,9 @@ const goToDetail = (item: TodoItem) => {
         isConfirmDeleteOpen, itemToDelete,
         pageSizeOptions, pageSizeIndex, currentPage, totalPages, totalItems, onPageSizeChange, changePage,
         statusOptions, statusIndex, onStatusChange,
-        creatorOptions, creatorIndex, onCreatorChange,
+		creatorOptions, creatorIndex, onCreatorChange,
+		assigneeOptions, assigneeIndex, onAssigneeChange,
         customerOptions, customerIndex, onCustomerChange,
-        assigneeOptions, assigneeIndex, onAssigneeChange,
         sourceOptions, sourceIndex, onSourceChange,
         addNewTask, openFilter, closeFilter, resetFilter, applyFilter,
         showActionMenu, cancelDelete, confirmDelete

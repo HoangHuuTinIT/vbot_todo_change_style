@@ -89,10 +89,10 @@
 					</view>
 
 					<view class="f-group">
-						<text class="f-label">Người tạo</text>
-						<picker mode="selector" :range="creatorOptions" :value="creatorIndex" @change="onCreatorChange">
-							<view class="f-picker">{{ creatorOptions[creatorIndex] }}<text class="arrow">▼</text></view>
-						</picker>
+					    <text class="f-label">Người tạo</text>
+					    <picker mode="selector" :range="creatorOptions" :value="creatorIndex" @change="onCreatorChange">
+					        <view class="f-picker">{{ creatorOptions[creatorIndex] }}<text class="arrow">▼</text></view>
+					    </picker>
 					</view>
 
 					<view class="f-group">
@@ -103,10 +103,10 @@
 					</view>
 
 					<view class="f-group">
-						<text class="f-label">Người được giao</text>
-						<picker mode="selector" :range="assigneeOptions" :value="assigneeIndex" @change="onAssigneeChange">
-							<view class="f-picker">{{ assigneeOptions[assigneeIndex] }}<text class="arrow">▼</text></view>
-						</picker>
+					    <text class="f-label">Người được giao</text>
+					    <picker mode="selector" :range="assigneeOptions" :value="assigneeIndex" @change="onAssigneeChange">
+					        <view class="f-picker">{{ assigneeOptions[assigneeIndex] }}<text class="arrow">▼</text></view>
+					    </picker>
 					</view>
 
 					<view class="f-group">
