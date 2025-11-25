@@ -67,13 +67,9 @@ const selectCustomer = (item: CustomerDisplay) => {
     close();
 };
 
-
-
-// Helper: Format date ngắn gọn (dd/mm)
 const formatDate = (timestamp: number) => {
     if (!timestamp) return '';
     const date = new Date(timestamp);
-    // Chỉ hiện ngày/tháng cho gọn, hoặc thêm năm tùy bạn
     return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 };
 </script>
@@ -98,7 +94,6 @@ const formatDate = (timestamp: number) => {
 .customer-list { flex: 1; }
 .loading-state, .empty-state { text-align: center; padding: 30px; color: #888; font-size: 14px; }
 
-/* --- STYLING CHO ITEM MỚI --- */
 .customer-item {
     display: flex;
     align-items: center;
@@ -107,27 +102,25 @@ const formatDate = (timestamp: number) => {
     background-color: #fff;
 }
 .customer-item:active {
-    background-color: #f9f9f9; /* Hiệu ứng nhấn */
+    background-color: #f9f9f9;
 }
 
 
 .mr-3 {
     margin-right: 12px;
 }
-/* 2. Info Column */
 .info-column {
-    flex: 1; /* Chiếm hết khoảng trống còn lại */
+    flex: 1; 
     display: flex;
     flex-direction: column;
     justify-content: center;
-    overflow: hidden; /* Để xử lý text dài nếu cần */
+    overflow: hidden;
 }
 .name-text {
     font-size: 15px;
     font-weight: 600;
     color: #333;
     margin-bottom: 3px;
-    /* Cắt chữ nếu quá dài */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -137,7 +130,6 @@ const formatDate = (timestamp: number) => {
     color: #666;
 }
 
-/* 3. Date Column */
 .date-column {
     margin-left: 10px;
     flex-shrink: 0;

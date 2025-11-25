@@ -1,8 +1,6 @@
-//api/auth.ts
-// Tạm code để lấy token tự động thay vì phải tự thay 
+
 import { request } from '@/utils/request.js';
 import { SYSTEM_CONFIG } from '@/utils/enums';
-// 1. Import biến AUTH_URL từ file config
 import { AUTH_API_URL, CRM_API_URL } from '@/utils/config'; 
 
 interface LoginResponse {

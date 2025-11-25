@@ -12,31 +12,27 @@
 import { computed } from 'vue';
 import { TODO_STATUS, STATUS_LABELS } from '@/utils/constants';
 import type { TodoStatusType } from '@/types/common';
-
-// Nhận vào status code (VD: 'TO_DO')
 const props = defineProps<{
   status: string 
 }>();
 
 const badgeLabel = computed(() => {
-  // Ép kiểu để dùng index
   return STATUS_LABELS[props.status as TodoStatusType] || props.status || 'Không xác định';
 });
 
 const badgeColorClass = computed(() => {
   switch (props.status) {
     case TODO_STATUS.NEW:
-      return 'bg-gray-200 text-gray-600'; // Màu xám (Chưa xử lý)
+      return 'bg-gray-200 text-gray-600'; 
     case TODO_STATUS.IN_PROGRESS:
-      return 'bg-orange-100 text-orange-600'; // Màu cam (Đang xử lý)
+      return 'bg-orange-100 text-orange-600'; 
     case TODO_STATUS.DONE:
-      return 'bg-green-100 text-green-600'; // Màu xanh lá (Hoàn thành)
+      return 'bg-green-100 text-green-600'; 
     default:
       return 'bg-gray-100 text-gray-400';
   }
 });
 
-// Fallback style nếu không dùng Tailwind hoặc class không nhận
 const customStyle = computed(() => {
   switch (props.status) {
     case TODO_STATUS.NEW:
@@ -52,7 +48,6 @@ const customStyle = computed(() => {
 </script>
 
 <style scoped>
-/* Hỗ trợ class utility nếu chưa có tailwind */
 .px-2 { padding-left: 8px; padding-right: 8px; }
 .py-1 { padding-top: 4px; padding-bottom: 4px; }
 .rounded-full { border-radius: 9999px; }

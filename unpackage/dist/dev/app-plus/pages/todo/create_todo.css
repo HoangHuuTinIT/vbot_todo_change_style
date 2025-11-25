@@ -370,7 +370,6 @@ to {
 .shrink-0[data-v-7abf19e0] {
   flex-shrink: 0;
 }
-/* Đảm bảo ảnh full */
 .w-full[data-v-7abf19e0] { width: 100%;
 }
 .h-full[data-v-7abf19e0] { height: 100%;
@@ -460,8 +459,6 @@ to {
   color: #888;
   font-size: 14px;
 }
-
-/* --- STYLING CHO ITEM MỚI --- */
 .customer-item[data-v-0c007ba7] {
   display: flex;
   align-items: center;
@@ -471,28 +468,22 @@ to {
 }
 .customer-item[data-v-0c007ba7]:active {
   background-color: #f9f9f9;
-  /* Hiệu ứng nhấn */
 }
 .mr-3[data-v-0c007ba7] {
   margin-right: 12px;
 }
-
-/* 2. Info Column */
 .info-column[data-v-0c007ba7] {
   flex: 1;
-  /* Chiếm hết khoảng trống còn lại */
   display: flex;
   flex-direction: column;
   justify-content: center;
   overflow: hidden;
-  /* Để xử lý text dài nếu cần */
 }
 .name-text[data-v-0c007ba7] {
   font-size: 15px;
   font-weight: 600;
   color: #333;
   margin-bottom: 3px;
-  /* Cắt chữ nếu quá dài */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -501,8 +492,6 @@ to {
   font-size: 13px;
   color: #666;
 }
-
-/* 3. Date Column */
 .date-column[data-v-0c007ba7] {
   margin-left: 10px;
   flex-shrink: 0;
@@ -566,8 +555,6 @@ to {
   font-size: 15px;
   color: #333;
 }
-
-/* Style mới cho Picker */
 .full-width-picker {
   flex: 1;
 }
@@ -579,8 +566,6 @@ to {
 .placeholder-color {
   color: #808080;
 }
-
-/* Màu xám giống placeholder của input */
 .footer-action {
   margin-top: 30px;
   display: flex;

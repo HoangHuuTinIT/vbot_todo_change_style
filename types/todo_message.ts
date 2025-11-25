@@ -1,5 +1,3 @@
-//types/todo_message.ts 
-// Reaction (Thả tim)
 import type { TodoMessageType } from './common';
 export interface ReactionDetail {
     codeEmoji: string;
@@ -11,32 +9,29 @@ export interface ReactionData {
     details: ReactionDetail[];
 }
 
-// Cấu trúc 1 Bình luận
 export interface TodoMessageData {
     id: number;
     todoId: number;
     senderId: string;
-    message: string; // HTML content
+    message: string; 
     type: TodoMessageType;
     files: string;
     createdAt: number;
     updatedAt: number | null;
     parentId: number | null;
-    replies: TodoMessageData[]; // Đệ quy
+    replies: TodoMessageData[]; 
     reactions: ReactionData;
-    isDeleted?: boolean; // Có thể có nếu đã xóa
+    isDeleted?: boolean; 
 }
 
-// Payload tạo bình luận
 export interface CreateMessagePayload {
     todoId: number;
     senderId: string;
     message: string;
     files: string;
-    parentId?: number; // -1 hoặc ID comment cha
+    parentId?: number; 
 }
 
-// Payload update bình luận
 export interface UpdateMessagePayload {
     id: number;
     todoId: number;
@@ -45,7 +40,6 @@ export interface UpdateMessagePayload {
     files: string;
 }
 
-// Payload Reaction
 export interface ReactionPayload {
     todoId: number;
     senderId: string;

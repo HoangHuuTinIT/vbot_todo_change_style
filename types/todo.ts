@@ -1,5 +1,3 @@
-//types/todo.ts  
-// Cấu trúc 1 Todo (Dùng cho cả List và Detail)
 import type { TodoStatusType, TodoLinkType } from './common';
 export interface AppConfig {
     projectCode: string;
@@ -10,11 +8,11 @@ export interface TodoForm {
     name: string;
     desc: string;
     customer: string;
-    customerUid?: string; // Có thể null nếu không chọn KH
-    assignee: string;     // memberUID
-    dueDate: string;      // YYYY-MM-DD
-    notifyDate: string;   // YYYY-MM-DD
-    notifyTime: string;   // HH:mm
+    customerUid?: string; 
+    assignee: string;   
+    dueDate: string;    
+    notifyDate: string;  
+    notifyTime: string; 
 }
 export interface TodoItem {
     id: number;
@@ -24,13 +22,13 @@ export interface TodoItem {
     projectCode: string | null;
     groupId: string;
     transId: string;
-    description: string; // HTML content
+    description: string; 
     status: TodoStatusType;
     createdBy: string;
     assigneeId: string;
     groupMemberUid: string | null;
-    dueDate: number; // Timestamp
-    notificationReceivedAt: number; // Timestamp
+    dueDate: number; 
+    notificationReceivedAt: number; 
     tags: string[];
     links: TodoLinkType;
     pluginType: string;
@@ -41,7 +39,6 @@ export interface TodoItem {
     reAssignCount: number | null;
 }
 
-// Param trên URL khi Filter/Get All Todo
 export interface GetTodoParams {
     projectCode: string;
     keySearch?: string;
@@ -62,7 +59,6 @@ export interface GetTodoParams {
     pageSize?: number;
 }
 
-// Payload gửi đi khi TẠO MỚI (Create)
 export interface CreateTodoPayload {
     title: string;
     customerCode: string;
@@ -79,12 +75,11 @@ export interface CreateTodoPayload {
     groupMemberUid: string;
     files: string;
     phone: string;
-    dueDate: number; // gửi -1 nếu không có
-    notificationReceivedAt: number; // gửi -1 nếu không có
+    dueDate: number; 
+    notificationReceivedAt: number; 
 }
 
-// Payload gửi đi khi CẬP NHẬT (Update)
 export interface UpdateTodoPayload extends CreateTodoPayload {
     id: number;
-    preFixCode: string; // VD: "TODO"
+    preFixCode: string; 
 }

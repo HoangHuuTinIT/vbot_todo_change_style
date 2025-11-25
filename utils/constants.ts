@@ -1,22 +1,21 @@
-import type { TodoStatus } from '@/types/todo';
+import type { TodoStatusType } from '@/types/common';
 
-// Sử dụng Enum hoặc đối tượng có kiểu rõ ràng hơn
-export const TODO_STATUS: Record<string, TodoStatus> = {
+export const TODO_STATUS = {
     NEW: 'TO_DO',
     IN_PROGRESS: 'IN_PROGRESS',
     DONE: 'DONE'
+} as const;
+
+export const STATUS_LABELS: Record<TodoStatusType, string> = {
+    'TO_DO': 'Chờ xử lý',
+    'IN_PROGRESS': 'Đang xử lý',
+    'DONE': 'Hoàn thành'
 };
 
-export const STATUS_LABELS: Record<TodoStatus, string> = {
-    [TODO_STATUS.NEW]: 'Chờ xử lý',
-    [TODO_STATUS.IN_PROGRESS]: 'Đang xử lý',
-    [TODO_STATUS.DONE]: 'Hoàn thành'
-};
-
-export const STATUS_COLORS: Record<TodoStatus, string> = {
-    [TODO_STATUS.DONE]: 'bg-green',
-    [TODO_STATUS.IN_PROGRESS]: 'bg-orange',
-    [TODO_STATUS.NEW]: 'bg-gray'
+export const STATUS_COLORS: Record<TodoStatusType, string> = {
+    'TO_DO': 'bg-gray',    
+    'IN_PROGRESS': 'bg-orange',
+    'DONE': 'bg-green'
 };
 
 export const TIMELINE_TYPE_MAP: Record<string, string> = {

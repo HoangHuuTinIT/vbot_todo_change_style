@@ -7,7 +7,6 @@ interface RequestOptions extends UniApp.RequestOptions {
     header?: any;
 }
 
-// [SỬA Ở ĐÂY]: Thêm <T = any> vào trước dấu ngoặc đơn
 export const request = async <T = any>(options: RequestOptions): Promise<T> => {
     const authStore = useAuthStore();
 
@@ -31,19 +30,16 @@ export const request = async <T = any>(options: RequestOptions): Promise<T> => {
             
             success: async (res: UniApp.RequestSuccessCallbackResult) => {
                 const data = res.data as any;
-
-                // Interceptor: Chỉ lấy phần .data bên trong ApiResponse
                 if (res.statusCode === 200) {
-                    // [QUAN TRỌNG] resolve thẳng data.data với kiểu T
                     resolve(data.data as T); 
                     return;
                 }
 
                 if (res.statusCode === 401) {
-                    console.warn(`⚠️ API 401: Token hết hạn tại ${options.url}`);
+                    console.warn(`API 401: Token hết hạn tại ${options.url}`);
 
                     if (options._isRetry) {
-                        console.error('❌ Refresh Token cũng thất bại -> Logout.');
+                        console.error(' Refresh Token cũng thất bại -> Logout.');
                         authStore.logout();
                         reject(data);
                         return;
@@ -51,9 +47,7 @@ export const request = async <T = any>(options: RequestOptions): Promise<T> => {
 
                     try {
                         await authStore.exchangeForTodoToken();
-                        console.log('🔄 Đã Refresh Token -> Đang gọi lại API cũ...');
-
-                        // Gọi lại request (recursive)
+                        console.log(' Đã Refresh Token -> Đang gọi lại API cũ...');
                         const retryResult = await request<T>({ 
                             ...options, 
                             _isRetry: true 

@@ -178,22 +178,18 @@
 	const { 
 		todos, isLoading, isFilterOpen, filter,
 		isConfirmDeleteOpen, itemToDelete,
-		// Pagination Props
 		pageSizeOptions, pageSizeIndex, currentPage, totalPages, onPageSizeChange, changePage,
-		// Options Props
 		statusOptions, statusIndex, onStatusChange,
 		creatorOptions, creatorIndex, onCreatorChange,
 		customerOptions, customerIndex, onCustomerChange,
 		assigneeOptions, assigneeIndex, onAssigneeChange,
 		sourceOptions, sourceIndex, onSourceChange,
-		// Actions
 		addNewTask, openFilter, closeFilter, resetFilter, applyFilter,
 		showActionMenu, cancelDelete, confirmDelete,goToDetail
 	} = useListTodoController();
 </script>
 
 <style lang="scss" scoped>
-	/* GIỮ NGUYÊN CSS CŨ */
 	.container { display: flex; flex-direction: column; height: 100vh; background-color: #f0f2f5; overflow: hidden; }
 	.header { height: 50px; padding: 40px 20px 10px 20px; background-color: #fff; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
 	.header-left { width: 30px; }

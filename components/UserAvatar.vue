@@ -31,8 +31,6 @@
 
 <script setup>
 import { computed, defineProps } from 'vue';
-
-// [SỬA]: Dùng defineProps kiểu Runtime Object (An toàn hơn cho UniApp)
 const props = defineProps({
   name: {
     type: String,
@@ -62,7 +60,6 @@ const initialChar = computed(() => {
 .shrink-0 {
   flex-shrink: 0;
 }
-/* Đảm bảo ảnh full */
 .w-full { width: 100%; }
 .h-full { height: 100%; }
 .text-white { color: white; }

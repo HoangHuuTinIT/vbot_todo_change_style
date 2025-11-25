@@ -1,5 +1,4 @@
 
-/* Hỗ trợ class utility nếu chưa có tailwind */
 .px-2[data-v-7f144565] { padding-left: 8px; padding-right: 8px;
 }
 .py-1[data-v-7f144565] { padding-top: 4px; padding-bottom: 4px;
@@ -42,7 +41,6 @@
 /* 垂直间距 */
 /* 透明度 */
 /* 文章场景相关 */
-/* GIỮ NGUYÊN CSS CŨ */
 .container[data-v-1b4e60ea] {
   display: flex;
   flex-direction: column;

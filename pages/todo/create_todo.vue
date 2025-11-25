@@ -85,12 +85,11 @@
     const { 
         loading, form, goBack, submitForm,
         memberOptions, onMemberChange, currentAssigneeName,
-        // Các biến customer
         showCustomerModal, loadingCustomer, customerList, 
         openCustomerPopup, onCustomerSelect,
 		sourceOptions, 
-		        sourceIndex, 
-		        onSourceChange,
+		sourceIndex, 
+		onSourceChange,
     } = useCreateTodoController();
 </script>
 
@@ -102,10 +101,9 @@
     .item-icon { width: 22px; height: 22px; opacity: 0.6; }
     .item-input { flex: 1; text-align: left; font-size: 15px; color: #333; }
 
-    /* Style mới cho Picker */
     .full-width-picker { flex: 1; }
     .picker-display { font-size: 15px; color: #333; width: 100%; }
-    .placeholder-color { color: #808080; } /* Màu xám giống placeholder của input */
+    .placeholder-color { color: #808080; }
 
     .footer-action { margin-top: 30px; display: flex; justify-content: space-between; }
     .btn { border-radius: 0; font-size: 15px; font-weight: bold; height: 45px; line-height: 45px; border: none; }

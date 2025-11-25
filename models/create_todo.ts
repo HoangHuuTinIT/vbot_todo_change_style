@@ -1,10 +1,6 @@
-//models/create_todo.ts
 import { TODO_STATUS } from '@/utils/constants';
 import { TODO_SOURCE, DEFAULT_VALUES } from '@/utils/enums';
-// Import Types
 import type { TodoForm, CreateTodoPayload, AppConfig } from '@/types/todo';
-
-// Helper: Chuyển đổi chuỗi ngày giờ sang timestamp
 const dateToTimestamp = (dateStr: string): number => {
     if (!dateStr) return -1;
     const safeDateStr = dateStr.replace(/\//g, '-');
@@ -12,10 +8,6 @@ const dateToTimestamp = (dateStr: string): number => {
     return isNaN(dateObj.getTime()) ? -1 : dateObj.getTime();
 };
 
-/**
- * Model: Xây dựng Payload
- * Bây giờ hàm này trả về kiểu CreateTodoPayload -> IDE sẽ biết chính xác kết quả trả về có gì
- */
 export interface CreateTodoConfig extends AppConfig {
     link?: string; 
 }
@@ -31,7 +23,7 @@ export const buildCreateTodoPayload = (form: TodoForm, config: AppConfig): Creat
         projectCode: config.projectCode,
         createdBy: config.uid,
         
-        status: TODO_STATUS.NEW as any, // Ép kiểu nếu constants JS chưa chuẩn
+        status: TODO_STATUS.NEW as any, 
 		links: config.link || TODO_SOURCE.CALL,
         pluginType: DEFAULT_VALUES.PLUGIN_TYPE, 
         

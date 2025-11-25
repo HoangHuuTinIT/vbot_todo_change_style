@@ -1,4 +1,3 @@
-//types/Project.ts 
 export interface ProjectMember {
     Id: number;
     UID: string;
@@ -10,6 +9,6 @@ export interface ProjectMember {
     Phone: string | null;
     Status: number;
     memberNo: string | null;
-    memberUID: string; // ID dùng để gán việc (Assignee) thường là cái này hoặc UID
-    [key: string]: any; // Các trường phụ khác
+    memberUID: string; 
+    [key: string]: any; 
 }

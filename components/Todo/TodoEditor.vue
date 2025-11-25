@@ -143,12 +143,10 @@ interface EditorProps {
 const props = defineProps<EditorProps>();
 const emit = defineEmits(['update:modelValue']);
 const editorId = ref(`editor-${Math.random().toString(36).substring(2, 9)}`);
-// State riêng của Editor
 const editorCtx = ref(null);
 const formats = ref({});
 const instance = getCurrentInstance(); 
 const isTyping = ref(false);
-// Popup State
 const showLinkPopup = ref(false);
 const linkUrl = ref('');
 const linkText = ref('');
@@ -170,7 +168,6 @@ const showAlignPopup = ref(false);
 
 const isPopupOpen = computed(() => showLinkPopup.value || showColorPopup.value || showAlignPopup.value);
 
-// 3. Hàm chọn căn lề
 const selectAlign = (alignType) => {
     format('align', alignType); 
     showAlignPopup.value = false; 

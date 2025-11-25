@@ -217,98 +217,15 @@
                 </view>
             
                 <view v-else>
-                    <view v-for="item in comments" :key="item.id" class="comment-thread">
-                        <view class="comment-row">
-                            <UserAvatar 
-                                :name="item.senderName"
-                                :avatar-color="item.senderAvatarColor"
-                                :size="40"
-                                class="mr-3"
-                            />
-                            <view class="c-content-block">
-                                <view class="c-header">
-                                    <text class="c-name">{{ item.senderName }}</text>
-                                    <text class="c-time">{{ item.timeDisplay }}</text>
-                                    <text v-if="item.isEdited" class="c-edited"> • Đã chỉnh sửa</text>
-                                </view>
-                                <text class="c-action-row">{{ item.actionText }}</text>
-                                <view class="c-message-box"><rich-text :nodes="item.message"></rich-text></view>
-                                
-                                <view class="c-footer-actions">
-                                    <view class="reaction-row">
-                                        <view v-if="item.reactions && item.reactions.length > 0" style="display: flex; gap: 5px;">
-                                            <view v-for="(react, rIdx) in item.reactions" :key="rIdx" class="emoji-tag">{{ react.codeEmoji }}</view>
-                                        </view>
-                                    </view>
-            
-                                    <view class="action-buttons-container" v-if="item.type !== 'UPDATE_TODO'">
-                                        <view class="btn-icon-action" @click="onToggleEmojiPicker(item)">
-                                            <image src="https://img.icons8.com/ios/50/999999/happy--v1.png" class="icon-action"></image>
-                                        </view>
-            
-                                        <view class="btn-icon-action" @click="onRequestReply(item)">
-                                            <image src="https://img.icons8.com/ios/50/999999/speech-bubble--v1.png" class="icon-action"></image>
-                                        </view>
-            
-                                        <template v-if="item.id && String(item.senderId) === String(currentUserId)">
-                                            <view class="btn-icon-action" @click="onRequestEditComment(item.id)">
-                                                <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
-                                            </view>
-                                            <view class="btn-icon-action" @click="onRequestDeleteComment(item.id)">
-                                                <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
-                                            </view>
-                                        </template>
-                                    </view>
-                                </view>
-                            </view>
-                        </view>
-            
-                        <view v-if="item.children && item.children.length > 0" class="replies-wrapper">
-                            <view v-for="child in item.children" :key="child.id" class="comment-row child-row">
-                                <UserAvatar 
-                                    :name="child.senderName"
-                                    :avatar-color="child.senderAvatarColor"
-                                    :size="30"
-                                    class="mr-2"
-                                />
-                                <view class="c-content-block">
-                                    <view class="c-header">
-                                        <text class="c-name">{{ child.senderName }}</text>
-                                        <text class="c-time">{{ child.timeDisplay }}</text>
-                                        <text v-if="child.isEdited" class="c-edited"> • Đã chỉnh sửa</text>
-                                    </view>
-                                    <view class="c-message-box"><rich-text :nodes="child.message"></rich-text></view>
-            
-                                    <view class="c-footer-actions">
-                                        <view class="reaction-row">
-                                            <view v-if="child.reactions && child.reactions.length > 0" style="display: flex; gap: 5px;">
-                                                <view v-for="(rChild, rcIdx) in child.reactions" :key="rcIdx" class="emoji-tag">{{ rChild.codeEmoji }}</view>
-                                            </view>
-                                        </view>
-            
-                                        <view class="action-buttons-container" v-if="child.type !== 'UPDATE_TODO'">
-                                            <view class="btn-icon-action" @click="onToggleEmojiPicker(child)">
-                                                <image src="https://img.icons8.com/ios/50/999999/happy--v1.png" class="icon-action"></image>
-                                            </view>
-            
-                                            <view class="btn-icon-action" @click="onRequestReply(child)">
-                                                <image src="https://img.icons8.com/ios/50/999999/speech-bubble--v1.png" class="icon-action"></image>
-                                            </view>
-            
-                                            <template v-if="child.id && String(child.senderId) === String(currentUserId)">
-                                                <view class="btn-icon-action" @click="onRequestEditComment(child.id)">
-                                                    <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
-                                                </view>
-                                                <view class="btn-icon-action" @click="onRequestDeleteComment(child.id)">
-                                                    <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
-                                                </view>
-                                            </template>
-                                        </view>
-                                    </view>
-                                </view>
-                            </view>
-                        </view>
-                    </view>
+                    <CommentItem 
+                        v-for="item in comments" 
+                        :key="item.id" 
+                        :data="item"
+                        @react="onToggleEmojiPicker"
+                        @reply="onRequestReply"
+                        @edit="(data) => onRequestEditComment(data.id)"
+                        @delete="(id) => onRequestDeleteComment(id)"
+                    />
                 </view>
             </view>
             
@@ -411,6 +328,7 @@
     import TodoEditor from '@/components/Todo/TodoEditor.vue';
     import TodoDatePicker from '@/components/Todo/TodoDatePicker.vue';
 import UserAvatar from '@/components/UserAvatar.vue';
+import CommentItem from '@/components/Todo/CommentItem.vue';
     const { 
         isLoading,isLoadingCustomer, // Lấy thêm isLoading
 		isLoadingHistory, historyList,
@@ -613,26 +531,16 @@ import UserAvatar from '@/components/UserAvatar.vue';
 				
 				    .avatar-char.small-char { font-size: 14px; }
 				
-				    .c-content-block { flex: 1; }
+				   
 				
 				    /* Header Info */
-				    .c-header { display: flex; align-items: baseline; flex-wrap: wrap; margin-bottom: 2px; }
-				    .c-name { font-weight: 700; color: #333; font-size: 15px; margin-right: 8px; }
-				    .c-time { font-size: 12px; color: #999; margin-right: 5px; }
+				
 				    .c-action { font-size: 13px; color: #666; }
 				    .c-edited { font-size: 11px; color: #aaa; font-style: italic; margin-left: 5px; }
 				    .c-action-row { display: block; font-size: 12px; color: #888; margin-bottom: 4px; }
 				
 				    /* Message Content */
-				    .c-message-box {
-				        font-size: 15px; color: #333; line-height: 1.5;
-				        background-color: #f9f9fa;
-				        padding: 8px 12px;
-				        border-radius: 8px;
-				        border-top-left-radius: 0; /* Tạo kiểu bong bóng chat */
-				        margin-top: 2px;
-				    }
-				
+				    
 				    /* Reactions */
 				    .reaction-row { display: flex; gap: 5px; margin-top: 5px; }
 				    .emoji-tag {
@@ -706,14 +614,7 @@ import UserAvatar from '@/components/UserAvatar.vue';
 						        height: 1px; background-color: #eee; margin: 20px 0;
 						    }
 							
-							.c-footer-actions {
-							        display: flex;
-							        justify-content: space-between;
-							        align-items: center;
-							        margin-top: 4px;
-							        min-height: 20px;
-							    }
-							    
+							
 							    .reaction-row { flex: 1; }
 							
 							    .btn-delete {
@@ -761,11 +662,7 @@ import UserAvatar from '@/components/UserAvatar.vue';
 	        border: 1px solid #ddd;
 	    }
 	
-	    .action-buttons-container {
-	        display: flex;
-	        gap: 15px; /* Khoảng cách giữa bút và thùng rác */
-	    }
-	
+	   
 	    .btn-icon-action {
 	        padding: 4px;
 	        opacity: 0.6;

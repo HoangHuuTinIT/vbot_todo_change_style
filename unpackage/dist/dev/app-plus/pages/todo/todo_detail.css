@@ -370,7 +370,6 @@ to {
 .shrink-0[data-v-7abf19e0] {
   flex-shrink: 0;
 }
-/* Đảm bảo ảnh full */
 .w-full[data-v-7abf19e0] { width: 100%;
 }
 .h-full[data-v-7abf19e0] { height: 100%;
@@ -386,6 +385,109 @@ to {
 .justify-center[data-v-7abf19e0] { justify-content: center;
 }
 .overflow-hidden[data-v-7abf19e0] { overflow: hidden;
+}
+
+
+.flex[data-v-8cb873be] { display: flex;
+}
+.flex-1[data-v-8cb873be] { flex: 1;
+}
+.gap-1[data-v-8cb873be] { gap: 4px;
+}
+.gap-3[data-v-8cb873be] { gap: 12px;
+}
+.mb-1[data-v-8cb873be] { margin-bottom: 4px;
+}
+.mb-4[data-v-8cb873be] { margin-bottom: 16px;
+}
+.mt-1[data-v-8cb873be] { margin-top: 4px;
+}
+.mt-2[data-v-8cb873be] { margin-top: 8px;
+}
+.items-start[data-v-8cb873be] { align-items: flex-start;
+}
+.items-center[data-v-8cb873be] { align-items: center;
+}
+.justify-between[data-v-8cb873be] { justify-content: space-between;
+}
+.shrink-0[data-v-8cb873be] { flex-shrink: 0;
+}
+.overflow-hidden[data-v-8cb873be] { overflow: hidden;
+}
+.bg-gray-50[data-v-8cb873be] { background-color: #f9fafb;
+}
+.rounded-2xl[data-v-8cb873be] { border-radius: 16px;
+}
+.rounded-tl-none[data-v-8cb873be] { border-top-left-radius: 0;
+}
+.rounded-full[data-v-8cb873be] { border-radius: 9999px;
+}
+.p-3[data-v-8cb873be] { padding: 12px;
+}
+.px-1[data-v-8cb873be] { padding-left: 4px; padding-right: 4px;
+}
+.text-sm[data-v-8cb873be] { font-size: 14px;
+}
+.text-xs[data-v-8cb873be] { font-size: 12px;
+}
+.font-bold[data-v-8cb873be] { font-weight: 700;
+}
+.font-medium[data-v-8cb873be] { font-weight: 500;
+}
+.text-gray-900[data-v-8cb873be] { color: #111827;
+}
+.text-gray-700[data-v-8cb873be] { color: #374151;
+}
+.text-gray-400[data-v-8cb873be] { color: #9ca3af;
+}
+.italic[data-v-8cb873be] { font-style: italic;
+}
+.ml-1[data-v-8cb873be] { margin-left: 4px;
+}
+.ml-2[data-v-8cb873be] { margin-left: 8px;
+}
+.mr-2[data-v-8cb873be] { margin-right: 8px;
+}
+.mr-3[data-v-8cb873be] { margin-right: 12px;
+}
+.pl-12[data-v-8cb873be] { padding-left: 48px;
+}
+.c-footer-actions[data-v-8cb873be] {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+    min-height: 24px;
+}
+.reaction-row[data-v-8cb873be] { flex: 1;
+}
+.emoji-tag[data-v-8cb873be] {
+    background-color: #fff; border: 1px solid #eee;
+    border-radius: 10px; padding: 2px 6px; font-size: 12px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    display: inline-block;
+}
+.action-buttons-container[data-v-8cb873be] {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-left: auto;
+}
+.btn-icon-action[data-v-8cb873be] {
+    padding: 4px;
+    opacity: 0.6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+.btn-icon-action[data-v-8cb873be]:active { opacity: 1;
+}
+.icon-action[data-v-8cb873be] {
+    width: 18px;
+    height: 18px;
+}
+[data-v-8cb873be] img { max-width: 100%; height: auto;
 }
 
 /**
@@ -653,28 +755,8 @@ to {
 .avatar-char.small-char[data-v-9f96c8fe] {
   font-size: 14px;
 }
-.c-content-block[data-v-9f96c8fe] {
-  flex: 1;
-}
 
 /* Header Info */
-.c-header[data-v-9f96c8fe] {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  margin-bottom: 2px;
-}
-.c-name[data-v-9f96c8fe] {
-  font-weight: 700;
-  color: #333;
-  font-size: 15px;
-  margin-right: 8px;
-}
-.c-time[data-v-9f96c8fe] {
-  font-size: 12px;
-  color: #999;
-  margin-right: 5px;
-}
 .c-action[data-v-9f96c8fe] {
   font-size: 13px;
   color: #666;
@@ -693,18 +775,6 @@ to {
 }
 
 /* Message Content */
-.c-message-box[data-v-9f96c8fe] {
-  font-size: 15px;
-  color: #333;
-  line-height: 1.5;
-  background-color: #f9f9fa;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border-top-left-radius: 0;
-  /* Tạo kiểu bong bóng chat */
-  margin-top: 2px;
-}
-
 /* Reactions */
 .reaction-row[data-v-9f96c8fe] {
   display: flex;
@@ -791,13 +861,6 @@ to {
   height: 1px;
   background-color: #eee;
   margin: 20px 0;
-}
-.c-footer-actions[data-v-9f96c8fe] {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 4px;
-  min-height: 20px;
 }
 .reaction-row[data-v-9f96c8fe] {
   flex: 1;
@@ -894,11 +957,6 @@ to {
   line-height: 32px;
   border-radius: 16px;
   border: 1px solid #ddd;
-}
-.action-buttons-container[data-v-9f96c8fe] {
-  display: flex;
-  gap: 15px;
-  /* Khoảng cách giữa bút và thùng rác */
 }
 .btn-icon-action[data-v-9f96c8fe] {
   padding: 4px;
