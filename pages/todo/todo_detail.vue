@@ -219,9 +219,12 @@
                 <view v-else>
                     <view v-for="item in comments" :key="item.id" class="comment-thread">
                         <view class="comment-row">
-                            <view class="c-avatar" :style="{ backgroundColor: item.senderAvatarColor }">
-                                <text class="avatar-char white-text">{{ item.senderAvatarChar }}</text>
-                            </view>
+                            <UserAvatar 
+                                :name="item.senderName"
+                                :avatar-color="item.senderAvatarColor"
+                                :size="40"
+                                class="mr-3"
+                            />
                             <view class="c-content-block">
                                 <view class="c-header">
                                     <text class="c-name">{{ item.senderName }}</text>
@@ -262,9 +265,12 @@
             
                         <view v-if="item.children && item.children.length > 0" class="replies-wrapper">
                             <view v-for="child in item.children" :key="child.id" class="comment-row child-row">
-                                <view class="c-avatar small" :style="{ backgroundColor: child.senderAvatarColor }">
-                                    <text class="avatar-char small-char white-text">{{ child.senderAvatarChar }}</text>
-                                </view>
+                                <UserAvatar 
+                                    :name="child.senderName"
+                                    :avatar-color="child.senderAvatarColor"
+                                    :size="30"
+                                    class="mr-2"
+                                />
                                 <view class="c-content-block">
                                     <view class="c-header">
                                         <text class="c-name">{{ child.senderName }}</text>
@@ -404,7 +410,7 @@
     import { useTodoDetailController } from '@/controllers/todo_detail';
     import TodoEditor from '@/components/Todo/TodoEditor.vue';
     import TodoDatePicker from '@/components/Todo/TodoDatePicker.vue';
-
+import UserAvatar from '@/components/UserAvatar.vue';
     const { 
         isLoading,isLoadingCustomer, // Lấy thêm isLoading
 		isLoadingHistory, historyList,
@@ -597,32 +603,14 @@
 				    }
 				
 				    /* Avatar Styles */
-				    .c-avatar {
-				            width: 40px; height: 40px;
-				            background-color: #e3f2fd; /* Màu fallback nếu style lỗi */
-				            border-radius: 50%;
-				            display: flex; align-items: center; justify-content: center;
-				            margin-right: 12px;
-				            flex-shrink: 0;
-				            
-				            /* Thêm transition cho mượt */
-				            transition: background-color 0.3s ease;
-				        }
-				    
+				
 				        /* Sửa màu chữ mặc định hoặc dùng class riêng */
-				        .avatar-char { 
-				            color: #1976d2; /* Màu cũ */
-				            font-weight: bold; 
-				            font-size: 18px; 
-				        }
+				       
 				    
-				        /* Class mới cho chữ màu trắng nổi bật trên nền màu đậm */
-				        .white-text {
-				            color: #ffffff !important;
-				        }
+				     
 				    
 				    /* Small Avatar for Replies */
-				    .c-avatar.small { width: 30px; height: 30px; margin-right: 10px; }
+				
 				    .avatar-char.small-char { font-size: 14px; }
 				
 				    .c-content-block { flex: 1; }
@@ -755,7 +743,12 @@
 	        gap: 10px;
 	        align-items: center;
 	    }
-	
+	.mr-3 {
+	    margin-right: 12px;
+	}
+	.mr-2 {
+	    margin-right: 12px;
+	}
 	    .btn-cancel-edit {
 	        background-color: #f5f5f5;
 	        color: #666;

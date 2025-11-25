@@ -366,6 +366,28 @@ to {
   background-color: #ccc;
   margin: 0 10px;
 }
+
+.shrink-0[data-v-7abf19e0] {
+  flex-shrink: 0;
+}
+/* Đảm bảo ảnh full */
+.w-full[data-v-7abf19e0] { width: 100%;
+}
+.h-full[data-v-7abf19e0] { height: 100%;
+}
+.text-white[data-v-7abf19e0] { color: white;
+}
+.font-bold[data-v-7abf19e0] { font-weight: bold;
+}
+.flex[data-v-7abf19e0] { display: flex;
+}
+.items-center[data-v-7abf19e0] { align-items: center;
+}
+.justify-center[data-v-7abf19e0] { justify-content: center;
+}
+.overflow-hidden[data-v-7abf19e0] { overflow: hidden;
+}
+
 /**
  * 这里是uni-app内置的常用样式变量
  *
@@ -451,26 +473,8 @@ to {
   background-color: #f9f9f9;
   /* Hiệu ứng nhấn */
 }
-
-/* 1. Avatar */
-.avatar-circle[data-v-0c007ba7] {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background-color: #e3f2fd;
-  /* Màu nền xanh nhạt */
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.mr-3[data-v-0c007ba7] {
   margin-right: 12px;
-  flex-shrink: 0;
-  /* Không bị co lại */
-}
-.avatar-text[data-v-0c007ba7] {
-  color: #1976d2;
-  /* Màu chữ xanh đậm */
-  font-weight: bold;
-  font-size: 18px;
 }
 
 /* 2. Info Column */

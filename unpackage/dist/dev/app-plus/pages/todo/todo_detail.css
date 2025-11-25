@@ -366,6 +366,28 @@ to {
   background-color: #ccc;
   margin: 0 10px;
 }
+
+.shrink-0[data-v-7abf19e0] {
+  flex-shrink: 0;
+}
+/* Đảm bảo ảnh full */
+.w-full[data-v-7abf19e0] { width: 100%;
+}
+.h-full[data-v-7abf19e0] { height: 100%;
+}
+.text-white[data-v-7abf19e0] { color: white;
+}
+.font-bold[data-v-7abf19e0] { font-weight: bold;
+}
+.flex[data-v-7abf19e0] { display: flex;
+}
+.items-center[data-v-7abf19e0] { align-items: center;
+}
+.justify-center[data-v-7abf19e0] { justify-content: center;
+}
+.overflow-hidden[data-v-7abf19e0] { overflow: hidden;
+}
+
 /**
  * 这里是uni-app内置的常用样式变量
  *
@@ -626,40 +648,8 @@ to {
 }
 
 /* Avatar Styles */
-.c-avatar[data-v-9f96c8fe] {
-  width: 40px;
-  height: 40px;
-  background-color: #e3f2fd;
-  /* Màu fallback nếu style lỗi */
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12px;
-  flex-shrink: 0;
-  /* Thêm transition cho mượt */
-  transition: background-color 0.3s ease;
-}
-
 /* Sửa màu chữ mặc định hoặc dùng class riêng */
-.avatar-char[data-v-9f96c8fe] {
-  color: #1976d2;
-  /* Màu cũ */
-  font-weight: bold;
-  font-size: 18px;
-}
-
-/* Class mới cho chữ màu trắng nổi bật trên nền màu đậm */
-.white-text[data-v-9f96c8fe] {
-  color: #ffffff !important;
-}
-
 /* Small Avatar for Replies */
-.c-avatar.small[data-v-9f96c8fe] {
-  width: 30px;
-  height: 30px;
-  margin-right: 10px;
-}
 .avatar-char.small-char[data-v-9f96c8fe] {
   font-size: 14px;
 }
@@ -887,6 +877,12 @@ to {
   display: flex;
   gap: 10px;
   align-items: center;
+}
+.mr-3[data-v-9f96c8fe] {
+  margin-right: 12px;
+}
+.mr-2[data-v-9f96c8fe] {
+  margin-right: 12px;
 }
 .btn-cancel-edit[data-v-9f96c8fe] {
   background-color: #f5f5f5;

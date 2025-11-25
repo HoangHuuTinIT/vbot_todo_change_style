@@ -35,7 +35,7 @@
 							</view>
 							<view class="card-row bot-row">
 								<view class="code-tag">#{{ item.code }}</view>
-								<view class="status-badge" :class="item.statusClass">{{ item.statusLabel }}</view>
+								<StatusBadge :status="item.status" />
 							</view>
 						</view>
 					</view>
@@ -174,7 +174,7 @@
 
 <script setup lang="ts">
 	import { useListTodoController } from '@/controllers/list_todo';
-
+	import StatusBadge from '@/components/StatusBadge.vue';
 	const { 
 		todos, isLoading, isFilterOpen, filter,
 		isConfirmDeleteOpen, itemToDelete,
@@ -235,8 +235,6 @@
 	.card-date { font-size: 13px; color: #8898aa; }
 	.bot-row { justify-content: space-between; align-items: center; margin-bottom: 0; }
 	.code-tag { background-color: #f0f2f5; color: #525f7f; padding: 4px 10px; border-radius: 6px; font-size: 13px; font-weight: 600; letter-spacing: 0.5px; }
-	.status-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; color: #fff; text-align: center; min-width: 80px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-	.bg-green { background-color: #01684b; } .bg-gray { background-color: #bdbcbe; } .bg-orange { background-color: #e6a23c; }
 	.empty-state, .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #999; }
 	.empty-icon { width: 80px; height: 80px; margin-bottom: 20px; }
 

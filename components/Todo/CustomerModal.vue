@@ -17,9 +17,11 @@
                     class="customer-item"
                     @click="selectCustomer(item)"
                 >
-                    <view class="avatar-circle">
-                        <text class="avatar-text">{{ getAvatarLabel(item.name) }}</text>
-                    </view>
+                    <UserAvatar 
+                        :name="item.name" 
+                        :size="40"
+                        class="mr-3" 
+                    />
 
                     <view class="info-column">
                         <text class="name-text">{{ item.name || '(Không tên)' }}</text>
@@ -39,6 +41,7 @@
 </template>
 
 <script setup lang="ts">
+import UserAvatar from '@/components/UserAvatar.vue';
 interface CustomerDisplay {
     id: number;
     name: string;
@@ -64,11 +67,7 @@ const selectCustomer = (item: CustomerDisplay) => {
     close();
 };
 
-// Helper: Lấy chữ cái đầu tiên để làm Avatar
-const getAvatarLabel = (name: string) => {
-    if (!name) return '?';
-    return name.trim().charAt(0).toUpperCase();
-};
+
 
 // Helper: Format date ngắn gọn (dd/mm)
 const formatDate = (timestamp: number) => {
@@ -111,24 +110,10 @@ const formatDate = (timestamp: number) => {
     background-color: #f9f9f9; /* Hiệu ứng nhấn */
 }
 
-/* 1. Avatar */
-.avatar-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #e3f2fd; /* Màu nền xanh nhạt */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-right: 12px;
-    flex-shrink: 0; /* Không bị co lại */
-}
-.avatar-text {
-    color: #1976d2; /* Màu chữ xanh đậm */
-    font-weight: bold;
-    font-size: 18px;
-}
 
+.mr-3 {
+    margin-right: 12px;
+}
 /* 2. Info Column */
 .info-column {
     flex: 1; /* Chiếm hết khoảng trống còn lại */

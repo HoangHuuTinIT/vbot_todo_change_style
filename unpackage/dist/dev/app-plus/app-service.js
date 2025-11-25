@@ -2435,7 +2435,67 @@ This will fail in production if not fixed.`);
       confirmDelete
     };
   };
-  const _sfc_main$7 = /* @__PURE__ */ vue.defineComponent({
+  const _sfc_main$9 = /* @__PURE__ */ vue.defineComponent({
+    __name: "StatusBadge",
+    props: {
+      status: { type: String, required: true }
+    },
+    setup(__props, { expose: __expose }) {
+      __expose();
+      const props = __props;
+      const badgeLabel = vue.computed(() => {
+        return STATUS_LABELS[props.status] || props.status || "Không xác định";
+      });
+      const badgeColorClass = vue.computed(() => {
+        switch (props.status) {
+          case TODO_STATUS.NEW:
+            return "bg-gray-200 text-gray-600";
+          case TODO_STATUS.IN_PROGRESS:
+            return "bg-orange-100 text-orange-600";
+          case TODO_STATUS.DONE:
+            return "bg-green-100 text-green-600";
+          default:
+            return "bg-gray-100 text-gray-400";
+        }
+      });
+      const customStyle = vue.computed(() => {
+        switch (props.status) {
+          case TODO_STATUS.NEW:
+            return { backgroundColor: "#e4e4e7", color: "#52525b" };
+          case TODO_STATUS.IN_PROGRESS:
+            return { backgroundColor: "#ffedd5", color: "#c2410c" };
+          case TODO_STATUS.DONE:
+            return { backgroundColor: "#dcfce7", color: "#15803d" };
+          default:
+            return { backgroundColor: "#f4f4f5", color: "#a1a1aa" };
+        }
+      });
+      const __returned__ = { props, badgeLabel, badgeColorClass, customStyle };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  });
+  const _export_sfc = (sfc, props) => {
+    const target = sfc.__vccOpts || sfc;
+    for (const [key, val] of props) {
+      target[key] = val;
+    }
+    return target;
+  };
+  function _sfc_render$8(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock(
+      "view",
+      {
+        class: vue.normalizeClass(["px-2 py-1 rounded-full text-xs font-bold inline-block text-center min-w-[80px]", $setup.badgeColorClass]),
+        style: vue.normalizeStyle($setup.customStyle)
+      },
+      vue.toDisplayString($setup.badgeLabel),
+      7
+      /* TEXT, CLASS, STYLE */
+    );
+  }
+  const StatusBadge = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$8], ["__scopeId", "data-v-7f144565"], ["__file", "D:/uni_app/vbot_todo_4/components/StatusBadge.vue"]]);
+  const _sfc_main$8 = /* @__PURE__ */ vue.defineComponent({
     __name: "list_todo",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -2480,19 +2540,12 @@ This will fail in production if not fixed.`);
         confirmDelete,
         goToDetail
       } = useListTodoController();
-      const __returned__ = { todos, isLoading, isFilterOpen, filter, isConfirmDeleteOpen, itemToDelete, pageSizeOptions, pageSizeIndex, currentPage, totalPages, onPageSizeChange, changePage, statusOptions, statusIndex, onStatusChange, creatorOptions, creatorIndex, onCreatorChange, customerOptions, customerIndex, onCustomerChange, assigneeOptions, assigneeIndex, onAssigneeChange, sourceOptions, sourceIndex, onSourceChange, addNewTask, openFilter, closeFilter, resetFilter, applyFilter, showActionMenu, cancelDelete, confirmDelete, goToDetail };
+      const __returned__ = { todos, isLoading, isFilterOpen, filter, isConfirmDeleteOpen, itemToDelete, pageSizeOptions, pageSizeIndex, currentPage, totalPages, onPageSizeChange, changePage, statusOptions, statusIndex, onStatusChange, creatorOptions, creatorIndex, onCreatorChange, customerOptions, customerIndex, onCustomerChange, assigneeOptions, assigneeIndex, onAssigneeChange, sourceOptions, sourceIndex, onSourceChange, addNewTask, openFilter, closeFilter, resetFilter, applyFilter, showActionMenu, cancelDelete, confirmDelete, goToDetail, StatusBadge };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
   });
-  const _export_sfc = (sfc, props) => {
-    const target = sfc.__vccOpts || sfc;
-    for (const [key, val] of props) {
-      target[key] = val;
-    }
-    return target;
-  };
-  function _sfc_render$6(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$7(_ctx, _cache, $props, $setup, $data, $options) {
     var _a;
     return vue.openBlock(), vue.createElementBlock("view", { class: "container" }, [
       vue.createElementVNode("view", { class: "header" }, [
@@ -2585,15 +2638,9 @@ This will fail in production if not fixed.`);
                         1
                         /* TEXT */
                       ),
-                      vue.createElementVNode(
-                        "view",
-                        {
-                          class: vue.normalizeClass(["status-badge", item.statusClass])
-                        },
-                        vue.toDisplayString(item.statusLabel),
-                        3
-                        /* TEXT, CLASS */
-                      )
+                      vue.createVNode($setup["StatusBadge"], {
+                        status: item.status
+                      }, null, 8, ["status"])
                     ])
                   ])
                 ], 8, ["onClick"]);
@@ -2916,7 +2963,7 @@ This will fail in production if not fixed.`);
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const PagesTodoListTodo = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-1b4e60ea"], ["__file", "D:/uni_app/vbot_todo_4/pages/todo/list_todo.vue"]]);
+  const PagesTodoListTodo = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-1b4e60ea"], ["__file", "D:/uni_app/vbot_todo_4/pages/todo/list_todo.vue"]]);
   const dateToTimestamp = (dateStr) => {
     if (!dateStr)
       return -1;
@@ -3123,7 +3170,7 @@ This will fail in production if not fixed.`);
       onSourceChange
     };
   };
-  const _sfc_main$6 = /* @__PURE__ */ vue.defineComponent({
+  const _sfc_main$7 = /* @__PURE__ */ vue.defineComponent({
     __name: "TodoEditor",
     props: {
       modelValue: { type: String, required: true },
@@ -3295,7 +3342,7 @@ This will fail in production if not fixed.`);
       return __returned__;
     }
   });
-  function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$6(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "editor-wrapper" }, [
       vue.createElementVNode("view", { class: "toolbar" }, [
         vue.createElementVNode("view", { class: "tool-row" }, [
@@ -3668,8 +3715,8 @@ This will fail in production if not fixed.`);
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const TodoEditor = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-7d79903f"], ["__file", "D:/uni_app/vbot_todo_4/components/Todo/TodoEditor.vue"]]);
-  const _sfc_main$5 = /* @__PURE__ */ vue.defineComponent({
+  const TodoEditor = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-7d79903f"], ["__file", "D:/uni_app/vbot_todo_4/components/Todo/TodoEditor.vue"]]);
+  const _sfc_main$6 = /* @__PURE__ */ vue.defineComponent({
     __name: "TodoDatePicker",
     props: {
       dueDate: { type: String, required: true },
@@ -3705,7 +3752,7 @@ This will fail in production if not fixed.`);
       return __returned__;
     }
   });
-  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "flat-item date-compound-block" }, [
       vue.createElementVNode("view", { class: "right-column" }, [
         vue.createElementVNode("view", { class: "date-row" }, [
@@ -3781,7 +3828,79 @@ This will fail in production if not fixed.`);
       ])
     ]);
   }
-  const TodoDatePicker = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-245edb6a"], ["__file", "D:/uni_app/vbot_todo_4/components/Todo/TodoDatePicker.vue"]]);
+  const TodoDatePicker = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-245edb6a"], ["__file", "D:/uni_app/vbot_todo_4/components/Todo/TodoDatePicker.vue"]]);
+  const _sfc_main$5 = {
+    __name: "UserAvatar",
+    props: {
+      name: {
+        type: String,
+        default: ""
+      },
+      avatarUrl: {
+        type: String,
+        default: ""
+      },
+      avatarColor: {
+        type: String,
+        default: "#3b82f6"
+      },
+      size: {
+        type: Number,
+        default: 40
+      }
+    },
+    setup(__props, { expose: __expose }) {
+      __expose();
+      const props = __props;
+      const initialChar = vue.computed(() => {
+        if (!props.name)
+          return "?";
+        return props.name.trim().charAt(0).toUpperCase();
+      });
+      const __returned__ = { props, initialChar, computed: vue.computed };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock(
+      "view",
+      {
+        class: "rounded-full flex items-center justify-center overflow-hidden shrink-0",
+        style: vue.normalizeStyle({
+          width: $props.size + "px",
+          height: $props.size + "px",
+          backgroundColor: $props.avatarColor || "#e0e0e0",
+          borderRadius: "50%"
+        })
+      },
+      [
+        $props.avatarUrl ? (vue.openBlock(), vue.createElementBlock("image", {
+          key: 0,
+          src: $props.avatarUrl,
+          class: "w-full h-full",
+          mode: "aspectFill"
+        }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock(
+          "text",
+          {
+            key: 1,
+            class: "text-white font-bold flex items-center justify-center",
+            style: vue.normalizeStyle({
+              fontSize: $props.size * 0.45 + "px",
+              lineHeight: "1",
+              display: "flex"
+            })
+          },
+          vue.toDisplayString($setup.initialChar),
+          5
+          /* TEXT, STYLE */
+        ))
+      ],
+      4
+      /* STYLE */
+    );
+  }
+  const UserAvatar = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-7abf19e0"], ["__file", "D:/uni_app/vbot_todo_4/components/UserAvatar.vue"]]);
   const _sfc_main$4 = /* @__PURE__ */ vue.defineComponent({
     __name: "CustomerModal",
     props: {
@@ -3801,18 +3920,13 @@ This will fail in production if not fixed.`);
         emit("select", item);
         close();
       };
-      const getAvatarLabel = (name) => {
-        if (!name)
-          return "?";
-        return name.trim().charAt(0).toUpperCase();
-      };
       const formatDate = (timestamp) => {
         if (!timestamp)
           return "";
         const date = new Date(timestamp);
         return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
       };
-      const __returned__ = { props, emit, close, selectCustomer, getAvatarLabel, formatDate };
+      const __returned__ = { props, emit, close, selectCustomer, formatDate, UserAvatar };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
@@ -3852,15 +3966,11 @@ This will fail in production if not fixed.`);
                 class: "customer-item",
                 onClick: ($event) => $setup.selectCustomer(item)
               }, [
-                vue.createElementVNode("view", { class: "avatar-circle" }, [
-                  vue.createElementVNode(
-                    "text",
-                    { class: "avatar-text" },
-                    vue.toDisplayString($setup.getAvatarLabel(item.name)),
-                    1
-                    /* TEXT */
-                  )
-                ]),
+                vue.createVNode($setup["UserAvatar"], {
+                  name: item.name,
+                  size: 40,
+                  class: "mr-3"
+                }, null, 8, ["name"]),
                 vue.createElementVNode("view", { class: "info-column" }, [
                   vue.createElementVNode(
                     "text",
@@ -5002,7 +5112,7 @@ This will fail in production if not fixed.`);
       const toggleComments = () => {
         isCommentsOpen.value = !isCommentsOpen.value;
       };
-      const __returned__ = { isLoading, isLoadingCustomer, isLoadingHistory, historyList, form, statusOptions, sourceOptions, assigneeOptions, onStatusChange, onSourceChange, onAssigneeChange, saveTodo, historyFilterOptions, historyFilterIndex, onHistoryFilterChange, comments, isLoadingComments, newCommentText, isSubmittingComment, submitComment, isConfirmDeleteCommentOpen, onRequestDeleteComment, confirmDeleteComment, cancelDeleteComment, currentUserId, isEditingComment, onRequestEditComment, submitUpdateComment, onCancelEditComment, isConfirmCancelEditOpen, continueEditing, confirmCancelEdit, editingMemberName, isEmojiPickerOpen, emojiList, onToggleEmojiPicker, closeEmojiPicker, selectEmoji, isReplying, replyingMemberName, replyingCommentData, onRequestReply, onCancelReply, submitReply, isConfirmCancelReplyOpen, continueReplying, confirmCancelReply, commentFilterIndex, commentFilterOptions, onCommentFilterChange, isSavingDescription, onSaveDescription, onDateUpdate, isStatusDisabled, isCommentsOpen, toggleComments, TodoEditor, TodoDatePicker };
+      const __returned__ = { isLoading, isLoadingCustomer, isLoadingHistory, historyList, form, statusOptions, sourceOptions, assigneeOptions, onStatusChange, onSourceChange, onAssigneeChange, saveTodo, historyFilterOptions, historyFilterIndex, onHistoryFilterChange, comments, isLoadingComments, newCommentText, isSubmittingComment, submitComment, isConfirmDeleteCommentOpen, onRequestDeleteComment, confirmDeleteComment, cancelDeleteComment, currentUserId, isEditingComment, onRequestEditComment, submitUpdateComment, onCancelEditComment, isConfirmCancelEditOpen, continueEditing, confirmCancelEdit, editingMemberName, isEmojiPickerOpen, emojiList, onToggleEmojiPicker, closeEmojiPicker, selectEmoji, isReplying, replyingMemberName, replyingCommentData, onRequestReply, onCancelReply, submitReply, isConfirmCancelReplyOpen, continueReplying, confirmCancelReply, commentFilterIndex, commentFilterOptions, onCommentFilterChange, isSavingDescription, onSaveDescription, onDateUpdate, isStatusDisabled, isCommentsOpen, toggleComments, TodoEditor, TodoDatePicker, UserAvatar };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
@@ -5372,24 +5482,12 @@ This will fail in production if not fixed.`);
                   class: "comment-thread"
                 }, [
                   vue.createElementVNode("view", { class: "comment-row" }, [
-                    vue.createElementVNode(
-                      "view",
-                      {
-                        class: "c-avatar",
-                        style: vue.normalizeStyle({ backgroundColor: item.senderAvatarColor })
-                      },
-                      [
-                        vue.createElementVNode(
-                          "text",
-                          { class: "avatar-char white-text" },
-                          vue.toDisplayString(item.senderAvatarChar),
-                          1
-                          /* TEXT */
-                        )
-                      ],
-                      4
-                      /* STYLE */
-                    ),
+                    vue.createVNode($setup["UserAvatar"], {
+                      name: item.senderName,
+                      "avatar-color": item.senderAvatarColor,
+                      size: 40,
+                      class: "mr-3"
+                    }, null, 8, ["name", "avatar-color"]),
                     vue.createElementVNode("view", { class: "c-content-block" }, [
                       vue.createElementVNode("view", { class: "c-header" }, [
                         vue.createElementVNode(
@@ -5513,24 +5611,12 @@ This will fail in production if not fixed.`);
                           key: child.id,
                           class: "comment-row child-row"
                         }, [
-                          vue.createElementVNode(
-                            "view",
-                            {
-                              class: "c-avatar small",
-                              style: vue.normalizeStyle({ backgroundColor: child.senderAvatarColor })
-                            },
-                            [
-                              vue.createElementVNode(
-                                "text",
-                                { class: "avatar-char small-char white-text" },
-                                vue.toDisplayString(child.senderAvatarChar),
-                                1
-                                /* TEXT */
-                              )
-                            ],
-                            4
-                            /* STYLE */
-                          ),
+                          vue.createVNode($setup["UserAvatar"], {
+                            name: child.senderName,
+                            "avatar-color": child.senderAvatarColor,
+                            size: 30,
+                            class: "mr-2"
+                          }, null, 8, ["name", "avatar-color"]),
                           vue.createElementVNode("view", { class: "c-content-block" }, [
                             vue.createElementVNode("view", { class: "c-header" }, [
                               vue.createElementVNode(
