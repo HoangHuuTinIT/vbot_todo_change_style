@@ -4676,8 +4676,47 @@ This will fail in production if not fixed.`);
         fetchHistoryLog(form.value.customerCode);
       }
     };
-    const onStatusChange = (e) => {
-      form.value.statusIndex = e.detail.value;
+    const onStatusChange = async (e) => {
+      const newIndex = parseInt(e.detail.value);
+      form.value.statusIndex = newIndex;
+      const apiStatusValues = ["TO_DO", "IN_PROGRESS", "DONE"];
+      const newStatus = apiStatusValues[newIndex];
+      if (!form.value.raw) {
+        uni.showToast({ title: "Thiếu dữ liệu gốc", icon: "none" });
+        return;
+      }
+      uni.showLoading({ title: "Đang cập nhật..." });
+      try {
+        const payload = {
+          ...form.value.raw,
+          // Lấy toàn bộ dữ liệu cũ
+          status: newStatus,
+          // <-- Ghi đè trạng thái mới
+          // Các trường bắt buộc theo API update
+          preFixCode: "TODO",
+          description: form.value.desc,
+          // Lấy mô tả hiện tại (đề phòng người dùng đã sửa mô tả nhưng chưa bấm lưu)
+          files: "",
+          tagCodes: "",
+          // Cập nhật title nếu có sửa
+          title: form.value.title || form.value.raw.title
+        };
+        formatAppLog("log", "at controllers/todo_detail.ts:795", "Payload Update Status:", payload);
+        const res = await updateTodo(payload);
+        if (res) {
+          uni.showToast({ title: "Đã cập nhật trạng thái", icon: "success" });
+          form.value.raw.status = newStatus;
+          if (form.value.customerCode) {
+            await fetchHistoryLog(form.value.customerCode);
+          }
+          await fetchComments(form.value.id);
+        }
+      } catch (error) {
+        formatAppLog("error", "at controllers/todo_detail.ts:814", "Lỗi cập nhật trạng thái:", error);
+        uni.showToast({ title: "Lỗi cập nhật", icon: "none" });
+      } finally {
+        uni.hideLoading();
+      }
     };
     const onSourceChange = (e) => {
       form.value.sourceIndex = e.detail.value;
@@ -4693,7 +4732,7 @@ This will fail in production if not fixed.`);
       uni.navigateBack();
     };
     const saveTodo = () => {
-      formatAppLog("log", "at controllers/todo_detail.ts:768", "Lưu:", form.value);
+      formatAppLog("log", "at controllers/todo_detail.ts:831", "Lưu:", form.value);
       uni.showToast({ title: "Đã lưu", icon: "success" });
     };
     return {

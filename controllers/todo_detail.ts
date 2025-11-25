@@ -754,7 +754,70 @@ const fetchHistoryLog = async (customerUid: string) => {
 	        }
 	    };
     // ... (Giữ nguyên các event handler cũ: onStatusChange, saveTodo...)
-    const onStatusChange = (e: any) => { form.value.statusIndex = e.detail.value; };
+    const onStatusChange = async (e: any) => {
+            // 1. Lấy index từ UI Picker
+            const newIndex = parseInt(e.detail.value);
+            
+            // 2. Cập nhật UI ngay lập tức cho người dùng thấy
+            form.value.statusIndex = newIndex;
+    
+            // 3. Ánh xạ Index -> API Value
+            // Thứ tự UI: ['Chưa xử lý', 'Đang xử lý', 'Hoàn thành']
+            const apiStatusValues = ['TO_DO', 'IN_PROGRESS', 'DONE'];
+            const newStatus = apiStatusValues[newIndex];
+    
+            // 4. Kiểm tra dữ liệu gốc
+            if (!form.value.raw) {
+                uni.showToast({ title: 'Thiếu dữ liệu gốc', icon: 'none' });
+                return;
+            }
+    
+            // 5. Hiển thị loading
+            uni.showLoading({ title: 'Đang cập nhật...' });
+    
+            try {
+                // 6. Chuẩn bị payload (Giống hệt logic Save Description)
+                const payload = {
+                    ...form.value.raw, // Lấy toàn bộ dữ liệu cũ
+                    
+                    status: newStatus, // <-- Ghi đè trạng thái mới
+                    
+                    // Các trường bắt buộc theo API update
+                    preFixCode: "TODO",
+                    description: form.value.desc, // Lấy mô tả hiện tại (đề phòng người dùng đã sửa mô tả nhưng chưa bấm lưu)
+                    files: "",
+                    tagCodes: "",
+                    
+                    // Cập nhật title nếu có sửa
+                    title: form.value.title || form.value.raw.title
+                };
+    
+                console.log("Payload Update Status:", payload);
+    
+                // 7. Gọi API
+                const res = await updateTodo(payload);
+    
+                if (res) {
+                    uni.showToast({ title: 'Đã cập nhật trạng thái', icon: 'success' });
+                    
+                    // [QUAN TRỌNG] Cập nhật lại dữ liệu raw local để các lần lưu sau chính xác
+                    form.value.raw.status = newStatus;
+    
+                    // Tải lại lịch sử để thấy log thay đổi trạng thái (nếu có)
+                    if (form.value.customerCode) {
+                        await fetchHistoryLog(form.value.customerCode);
+                    }
+                    // Tải lại comment (nếu hệ thống có bắn log vào comment)
+                    await fetchComments(form.value.id);
+                }
+            } catch (error) {
+                console.error("Lỗi cập nhật trạng thái:", error);
+                // Nếu lỗi, có thể rollback lại statusIndex cũ nếu muốn (tùy chọn)
+                uni.showToast({ title: 'Lỗi cập nhật', icon: 'none' });
+            } finally {
+                uni.hideLoading();
+            }
+        };
     const onSourceChange = (e: any) => { form.value.sourceIndex = e.detail.value; };
     const onAssigneeChange = (e: any) => { 
         const idx = e.detail.value;
@@ -821,5 +884,6 @@ const fetchHistoryLog = async (customerUid: string) => {
 		
 		isSavingDescription,
 		onSaveDescription,
+	
     };
 };
