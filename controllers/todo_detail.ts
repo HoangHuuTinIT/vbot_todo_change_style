@@ -819,13 +819,72 @@ const fetchHistoryLog = async (customerUid: string) => {
             }
         };
     const onSourceChange = (e: any) => { form.value.sourceIndex = e.detail.value; };
-    const onAssigneeChange = (e: any) => { 
-        const idx = e.detail.value;
-        form.value.assigneeIndex = idx;
-        if (memberList.value[idx]) {
-            form.value.assigneeId = memberList.value[idx].memberUID;
-        }
-    };
+    const onAssigneeChange = async (e: any) => {
+            // 1. Lấy index từ UI Picker
+            const idx = parseInt(e.detail.value);
+            
+            // Kiểm tra xem index có hợp lệ trong danh sách member không
+            if (!memberList.value[idx]) return;
+    
+            // 2. Lấy thông tin member được chọn
+            const selectedMember = memberList.value[idx];
+            const newAssigneeId = selectedMember.memberUID;
+    
+            // 3. Cập nhật UI ngay lập tức
+            form.value.assigneeIndex = idx;
+            form.value.assigneeId = newAssigneeId;
+    
+            // 4. Kiểm tra dữ liệu gốc
+            if (!form.value.raw) {
+                uni.showToast({ title: 'Thiếu dữ liệu gốc', icon: 'none' });
+                return;
+            }
+    
+            // 5. Hiển thị loading
+            uni.showLoading({ title: 'Đang cập nhật người giao...' });
+    
+            try {
+                // 6. Chuẩn bị payload
+                const payload = {
+                    ...form.value.raw, // Lấy toàn bộ dữ liệu cũ
+                    
+                    assigneeId: newAssigneeId, // <-- Ghi đè người được giao mới
+                    
+                    // Các trường bắt buộc theo API update
+                    preFixCode: "TODO",
+                    description: form.value.desc, 
+                    files: "",
+                    tagCodes: "",
+                    
+                    // Cập nhật title nếu có sửa
+                    title: form.value.title || form.value.raw.title
+                };
+    
+                console.log("Payload Update Assignee:", payload);
+    
+                // 7. Gọi API
+                const res = await updateTodo(payload);
+    
+                if (res) {
+                    uni.showToast({ title: 'Đã đổi người thực hiện', icon: 'success' });
+                    
+                    // [QUAN TRỌNG] Cập nhật lại dữ liệu raw local
+                    form.value.raw.assigneeId = newAssigneeId;
+    
+                    // Tải lại lịch sử để thấy log thay đổi người giao (nếu có)
+                    if (form.value.customerCode) {
+                        await fetchHistoryLog(form.value.customerCode);
+                    }
+                    // Tải lại comment
+                    await fetchComments(form.value.id);
+                }
+            } catch (error) {
+                console.error("Lỗi cập nhật người giao:", error);
+                uni.showToast({ title: 'Lỗi cập nhật', icon: 'none' });
+            } finally {
+                uni.hideLoading();
+            }
+        };
     const goBack = () => { uni.navigateBack(); };
     const saveTodo = () => { 
         console.log("Lưu:", form.value); 

@@ -4721,18 +4721,55 @@ This will fail in production if not fixed.`);
     const onSourceChange = (e) => {
       form.value.sourceIndex = e.detail.value;
     };
-    const onAssigneeChange = (e) => {
-      const idx = e.detail.value;
+    const onAssigneeChange = async (e) => {
+      const idx = parseInt(e.detail.value);
+      if (!memberList.value[idx])
+        return;
+      const selectedMember = memberList.value[idx];
+      const newAssigneeId = selectedMember.memberUID;
       form.value.assigneeIndex = idx;
-      if (memberList.value[idx]) {
-        form.value.assigneeId = memberList.value[idx].memberUID;
+      form.value.assigneeId = newAssigneeId;
+      if (!form.value.raw) {
+        uni.showToast({ title: "Thiếu dữ liệu gốc", icon: "none" });
+        return;
+      }
+      uni.showLoading({ title: "Đang cập nhật người giao..." });
+      try {
+        const payload = {
+          ...form.value.raw,
+          // Lấy toàn bộ dữ liệu cũ
+          assigneeId: newAssigneeId,
+          // <-- Ghi đè người được giao mới
+          // Các trường bắt buộc theo API update
+          preFixCode: "TODO",
+          description: form.value.desc,
+          files: "",
+          tagCodes: "",
+          // Cập nhật title nếu có sửa
+          title: form.value.title || form.value.raw.title
+        };
+        formatAppLog("log", "at controllers/todo_detail.ts:863", "Payload Update Assignee:", payload);
+        const res = await updateTodo(payload);
+        if (res) {
+          uni.showToast({ title: "Đã đổi người thực hiện", icon: "success" });
+          form.value.raw.assigneeId = newAssigneeId;
+          if (form.value.customerCode) {
+            await fetchHistoryLog(form.value.customerCode);
+          }
+          await fetchComments(form.value.id);
+        }
+      } catch (error) {
+        formatAppLog("error", "at controllers/todo_detail.ts:882", "Lỗi cập nhật người giao:", error);
+        uni.showToast({ title: "Lỗi cập nhật", icon: "none" });
+      } finally {
+        uni.hideLoading();
       }
     };
     const goBack = () => {
       uni.navigateBack();
     };
     const saveTodo = () => {
-      formatAppLog("log", "at controllers/todo_detail.ts:831", "Lưu:", form.value);
+      formatAppLog("log", "at controllers/todo_detail.ts:890", "Lưu:", form.value);
       uni.showToast({ title: "Đã lưu", icon: "success" });
     };
     return {
