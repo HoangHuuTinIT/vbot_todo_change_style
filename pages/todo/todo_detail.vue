@@ -256,9 +256,19 @@
                         <image src="https://img.icons8.com/ios/50/666666/checked-checkbox.png" class="item-icon"></image>
                         <text class="item-label">Trạng thái</text>
                     </view>
-                    <picker mode="selector" :range="statusOptions" :value="form.statusIndex" @change="onStatusChange" class="item-picker-box">
-                        <view class="picker-text">{{ statusOptions[form.statusIndex] }} ▾</view>
-                    </picker>
+                    <picker 
+                            mode="selector" 
+                            :range="statusOptions" 
+                            :value="form.statusIndex" 
+                            :disabled="isStatusDisabled" 
+                            @change="onStatusChange" 
+                            class="item-picker-box"
+                        >
+                            <view class="picker-text" :class="{ 'disabled-text': isStatusDisabled }">
+                                {{ statusOptions[form.statusIndex] }} 
+                                <text v-if="!isStatusDisabled">▾</text>
+                            </view>
+                        </picker>
                 </view>
 
                 <view class="flat-item">
@@ -266,9 +276,11 @@
                         <image src="https://img.icons8.com/ios/50/666666/internet.png" class="item-icon"></image>
                         <text class="item-label">Nguồn</text>
                     </view>
-                    <picker mode="selector" :range="sourceOptions" :value="form.sourceIndex" @change="onSourceChange" class="item-picker-box">
-                        <view class="picker-text">{{ sourceOptions[form.sourceIndex] || 'Chọn nguồn' }} ▾</view>
-                    </picker>
+                    <view class="item-picker-box">
+                            <view class="picker-text disabled-text">
+                                {{ sourceOptions[form.sourceIndex] || 'Không xác định' }}
+                            </view>
+                        </view>
                 </view>
 
                 <view class="flat-item">
@@ -297,7 +309,7 @@
                     v-model:dueDate="form.dueDate"
                     v-model:notifyDate="form.notifyDate"
                     v-model:notifyTime="form.notifyTime"
-                />
+                    @change="onDateUpdate"  />
             </view>
 
             <!-- KHÁCH HÀNG -->
@@ -451,6 +463,9 @@
 				
 				isSavingDescription,
 				onSaveDescription,
+				
+				onDateUpdate,
+				isStatusDisabled,
     } = useTodoDetailController();
 </script>
 
@@ -878,5 +893,16 @@
 		    .quote-content {
 		        display: inline;
 		    }
+			.picker-text { 
+			        font-size: 15px; 
+			        color: #007aff; 
+			        font-weight: 500; 
+			    }
+			
+			    /* [MỚI] Style cho text bị vô hiệu hóa */
+			    .disabled-text {
+			        color: #999 !important; /* Màu xám */
+			        pointer-events: none;   /* Chặn click chuột (cho chắc chắn) */
+			    }
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; color: #007aff; font-weight: bold; }
 </style>

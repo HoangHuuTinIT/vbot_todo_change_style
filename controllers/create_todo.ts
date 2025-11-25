@@ -1,7 +1,7 @@
 // src/controllers/create_todo.ts
 import { ref, onMounted, computed } from 'vue';
 import { createTodo } from '@/api/todo';
-import { getAllMembers } from '@/api/project'; // Import API vừa tạo
+import { getAllMembers } from '@/api/project'; 
 import { PROJECT_CODE, UID } from '@/utils/config';
 import { buildCreateTodoPayload } from '@/models/create_todo';
 import type { TodoForm } from '@/types/todo';
@@ -19,7 +19,6 @@ export const useCreateTodoController = () => {
         return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
 
-    // --- FORM STATE ---
     const loading = ref<boolean>(false);
     
     const form = ref<TodoForm>({
@@ -44,7 +43,7 @@ export const useCreateTodoController = () => {
     const customerList = ref<any[]>([]); // List đã qua xử lý để hiển thị
     const customerToken = ref(''); // Lưu token CRM để dùng lại nếu cần
     // --- LOGIC ACTIONS ---
-    const cachedCrmToken = ref<string>('');
+    
     // 1. Hàm gọi API lấy thành viên (Mới)
     const fetchMembers = async () => {
         try {
@@ -65,11 +64,9 @@ export const useCreateTodoController = () => {
 	        loadingCustomer.value = true;
 	        try {
 	            // B1: Lấy Token CRM
-	            let token = cachedCrmToken.value;
-	                        if (!token) {
-	                            token = await getCrmToken(PROJECT_CODE, UID);
-	                            cachedCrmToken.value = token; // Lưu lại dùng cho lần sau
-	                        }
+	            const token = await getCrmToken(PROJECT_CODE, UID);
+	            customerToken.value = token;
+	
 	            // B2: Lấy cấu hình Field Search để tìm ID của name, phone
 	            const fields = await getCrmFieldSearch(token);
 	            
@@ -113,10 +110,7 @@ export const useCreateTodoController = () => {
 	
 	        } catch (error) {
 	            console.error('Lỗi tải khách hàng:', error);
-	            if (error?.status === 401 || error?.statusCode === 401) {
-	                            cachedCrmToken.value = '';
-	                        }
-							uni.showToast({ title: 'Không thể tải khách hàng', icon: 'none' });
+	            uni.showToast({ title: 'Lỗi tải dữ liệu CRM', icon: 'none' });
 	        } finally {
 	            loadingCustomer.value = false;
 	        }

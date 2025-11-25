@@ -1,5 +1,5 @@
 // src/controllers/todo_detail.ts
-import { ref , nextTick } from 'vue';
+import { ref , nextTick, computed } from 'vue';
 import { onLoad } from '@dcloudio/uni-app';
 import { updateTodo , getTodoDetail , getTodoMessages , createTodoMessage ,deleteTodoMessage , getTodoMessageDetail, updateTodoMessage,reactionTodoMessage} from '@/api/todo';
 import { getAllMembers } from '@/api/project';
@@ -9,6 +9,7 @@ import { PROJECT_CODE, UID } from '@/utils/config';
 import { TIMELINE_TYPE_MAP } from '@/utils/constants';
 import { useAuthStore } from '@/stores/auth';
 import { formatRelativeTime } from '@/utils/dateUtils';
+import { TODO_STATUS } from '@/utils/constants';
 interface CommentItem {
     id: number;
 	senderId: string | number;
@@ -70,6 +71,81 @@ export const useTodoDetailController = () => {
 	
 	const isSavingDescription = ref(false);
 	
+	
+	const convertToTimestamp = (dateStr: string, timeStr: string = '00:00'): number => {
+	    if (!dateStr) return 0;
+	    try {
+	        // Ghép chuỗi ngày và giờ
+	        const dateTimeStr = `${dateStr}T${timeStr}:00`; 
+	        return new Date(dateTimeStr).getTime();
+	    } catch {
+	        return 0;
+	    }
+	};
+	
+	const isStatusDisabled = computed(() => {
+	        // Nếu chưa có dữ liệu -> disable
+	        if (!form.value.raw) return true;
+	        // Nếu trạng thái hiện tại là DONE -> disable
+	        return form.value.raw.status === 'DONE';
+	    });
+	const onDateUpdate = async (event: { field: string, value: string }) => {
+	        if (!form.value.raw) return;
+	        
+	        uni.showLoading({ title: 'Đang cập nhật...' });
+	
+	        try {
+	            // 1. Chuẩn bị payload cơ sở
+	            const payload = {
+	                ...form.value.raw,
+	                preFixCode: "TODO",
+	                description: form.value.desc,
+	                files: "",
+	                tagCodes: "",
+	                title: form.value.title || form.value.raw.title
+	            };
+	
+	            // 2. Xử lý logic riêng cho từng loại ngày
+	            if (event.field === 'dueDate') {
+	                payload.dueDate = convertToTimestamp(event.value, '23:59'); // Set cuối ngày cho deadline
+	            } 
+	            else if (event.field === 'notifyDate' || event.field === 'notifyTime') {
+	                // Nếu sửa ngày hoặc giờ thông báo -> Phải lấy cả 2 trường ghép lại
+	                const datePart = event.field === 'notifyDate' ? event.value : form.value.notifyDate;
+	                const timePart = event.field === 'notifyTime' ? event.value : form.value.notifyTime;
+	                
+	                if (datePart && timePart) {
+	                    payload.notificationReceivedAt = convertToTimestamp(datePart, timePart);
+	                }
+	            }
+	
+	            console.log(`Payload Update ${event.field}:`, payload);
+	
+	            // 3. Gọi API
+	            const res = await updateTodo(payload);
+	
+	            if (res) {
+	                uni.showToast({ title: 'Cập nhật thành công', icon: 'success' });
+	                
+	                // [Quan trọng] Cập nhật lại raw data để đồng bộ
+	                if (event.field === 'dueDate') {
+	                    form.value.raw.dueDate = payload.dueDate;
+	                } else {
+	                    form.value.raw.notificationReceivedAt = payload.notificationReceivedAt;
+	                }
+	
+	                // Reload lịch sử
+	                if (form.value.customerCode) await fetchHistoryLog(form.value.customerCode);
+	                await fetchComments(form.value.id);
+	            }
+	
+	        } catch (error) {
+	            console.error("Lỗi cập nhật ngày:", error);
+	            uni.showToast({ title: 'Lỗi cập nhật', icon: 'none' });
+	        } finally {
+	            uni.hideLoading();
+	        }
+	    };
 	const onSaveDescription = async () => {
 	        // 1. Kiểm tra xem có data gốc không
 	        if (!form.value.raw) {
@@ -296,7 +372,24 @@ export const useTodoDetailController = () => {
     
     const memberList = ref<any[]>([]); 
     const assigneeOptions = ref<string[]>([]);
+	const dynamicStatusOptions = computed(() => {
+	        // Mặc định đủ 3 trạng thái
+	        const options = [
+	            { label: 'Chưa xử lý', value: 'TO_DO' },
+	            { label: 'Đang xử lý', value: 'IN_PROGRESS' },
+	            { label: 'Hoàn thành', value: 'DONE' }
+	        ];
 	
+	        // Kiểm tra trạng thái hiện tại từ raw data
+	        if (form.value.raw && form.value.raw.status === 'IN_PROGRESS') {
+	            // Nếu đang là IN_PROGRESS, loại bỏ TO_DO (phần tử đầu tiên)
+	            // Chỉ còn: ['Đang xử lý', 'Hoàn thành']
+	            return options.filter(opt => opt.value !== 'TO_DO');
+	        }
+	        
+	        return options;
+	    });
+		const statusLabels = computed(() => dynamicStatusOptions.value.map(opt => opt.label));
 	const onRequestEditComment = async (commentId: number) => {
 	        const todoId = form.value.id; 
 	        if (!todoId) return;
@@ -538,6 +631,11 @@ export const useTodoDetailController = () => {
             
             if (mappedData) {
                 form.value = mappedData;
+				const currentStatus = mappedData.raw.status;
+				const realIndex = dynamicStatusOptions.value.findIndex(opt => opt.value === currentStatus);
+				            if (realIndex !== -1) {
+				                form.value.statusIndex = realIndex;
+				            }
 				fetchComments(id);
                 // Map người được giao (Assignee)
                 if (form.value.assigneeId && memberList.value.length > 0) {
@@ -757,23 +855,20 @@ const fetchHistoryLog = async (customerUid: string) => {
     const onStatusChange = async (e: any) => {
             // 1. Lấy index từ UI Picker
             const newIndex = parseInt(e.detail.value);
-            
+            const selectedOption = dynamicStatusOptions.value[newIndex];
+                    if (!selectedOption) return;
             // 2. Cập nhật UI ngay lập tức cho người dùng thấy
             form.value.statusIndex = newIndex;
     
             // 3. Ánh xạ Index -> API Value
             // Thứ tự UI: ['Chưa xử lý', 'Đang xử lý', 'Hoàn thành']
             const apiStatusValues = ['TO_DO', 'IN_PROGRESS', 'DONE'];
-            const newStatus = apiStatusValues[newIndex];
+           const newStatus = selectedOption.value;
     
             // 4. Kiểm tra dữ liệu gốc
-            if (!form.value.raw) {
-                uni.showToast({ title: 'Thiếu dữ liệu gốc', icon: 'none' });
-                return;
-            }
-    
-            // 5. Hiển thị loading
-            uni.showLoading({ title: 'Đang cập nhật...' });
+           if (!form.value.raw) return;
+                   uni.showLoading({ title: 'Đang cập nhật...' });
+            
     
             try {
                 // 6. Chuẩn bị payload (Giống hệt logic Save Description)
@@ -802,13 +897,11 @@ const fetchHistoryLog = async (customerUid: string) => {
                     
                     // [QUAN TRỌNG] Cập nhật lại dữ liệu raw local để các lần lưu sau chính xác
                     form.value.raw.status = newStatus;
-    
+    const newDisplayIndex = dynamicStatusOptions.value.findIndex(opt => opt.value === newStatus);
+                    form.value.statusIndex = newDisplayIndex !== -1 ? newDisplayIndex : 0;
                     // Tải lại lịch sử để thấy log thay đổi trạng thái (nếu có)
-                    if (form.value.customerCode) {
-                        await fetchHistoryLog(form.value.customerCode);
-                    }
-                    // Tải lại comment (nếu hệ thống có bắn log vào comment)
-                    await fetchComments(form.value.id);
+                   if (form.value.customerCode) await fetchHistoryLog(form.value.customerCode);
+                                   await fetchComments(form.value.id);
                 }
             } catch (error) {
                 console.error("Lỗi cập nhật trạng thái:", error);
@@ -895,7 +988,7 @@ const fetchHistoryLog = async (customerUid: string) => {
         isLoading, isLoadingCustomer,
 		 isLoadingHistory, historyList,// Trả về thêm biến này
         form,
-        statusOptions, sourceOptions, assigneeOptions,
+        statusOptions: statusLabels, sourceOptions, assigneeOptions,
         onStatusChange, onSourceChange, onAssigneeChange,
         goBack, saveTodo,
 		
@@ -944,5 +1037,10 @@ const fetchHistoryLog = async (customerUid: string) => {
 		isSavingDescription,
 		onSaveDescription,
 	
+	    onDateUpdate,
+		isStatusDisabled,
+		
+		dynamicStatusOptions,
+		
     };
 };

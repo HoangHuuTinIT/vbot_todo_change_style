@@ -1,13 +1,13 @@
 //api/todo.ts 
 import { request } from '@/utils/request';
-import { mapTodoFromApi } from '@/models/todo'; // Import mapper (File này vẫn là JS)
+import { mapTodoFromApi } from '@/models/todo';
 import type { CreateTodoPayload } from '@/types/todo';
 import { PROJECT_CODE, TODO_API_URL ,SERVER_BASE_URL} from '@/utils/config';
 
 export const getTodos = async (params: any): Promise<any[]> => {
     const rawData = await request({
        url: `${TODO_API_URL}/getAll`,
-        method: 'GET', // Lưu ý: Phải là POST để gửi data filter
+        method: 'GET', 
         data: {
             projectCode: PROJECT_CODE,
             pageNo: params.pageNo || 1,
@@ -17,34 +17,24 @@ export const getTodos = async (params: any): Promise<any[]> => {
     });
 
     if (Array.isArray(rawData)) {
-        // item: any vì mapTodoFromApi nhận input từ file JS
         return rawData.map((item: any) => mapTodoFromApi(item));
     }
     return [];
 };
 
-/**
- * 2. API Đếm tổng số lượng
- * - Return: Promise trả về number
- */
 export const getTodoCount = async (params: any): Promise<number> => {
     const result = await request({
        url: `${TODO_API_URL}/countAll`,
-        method: 'GET', // Lưu ý: Phải là POST
+        method: 'GET', 
         data: {
             projectCode: PROJECT_CODE,
             ...params 
         }
     });
     
-    // Ép kiểu về number cho chắc chắn
     return Number(result) || 0; 
 };
 
-/**
- * 3. API Tạo mới
- * - data: Sử dụng Interface CreateTodoPayload đã định nghĩa chặt chẽ
- */
 export const createTodo = (data: CreateTodoPayload): Promise<any> => {
     return request({
         url: `${TODO_API_URL}/create`,
@@ -53,10 +43,6 @@ export const createTodo = (data: CreateTodoPayload): Promise<any> => {
     });
 };
 
-/**
- * 4. API Xóa
- * - id: Có thể là string hoặc number
- */
 export const deleteTodo = (id: string | number): Promise<any> => {
     return request({
         url: `${TODO_API_URL}/delete`,
@@ -82,7 +68,7 @@ export const getTodoMessages = (todoId: string | number, keySearch: string = '')
         method: 'GET',
         data: {
             todoId: todoId,
-            keySearch: keySearch // Truyền keySearch dynamic
+            keySearch: keySearch 
         }
     });
 };

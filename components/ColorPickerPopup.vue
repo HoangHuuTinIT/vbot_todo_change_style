@@ -17,7 +17,7 @@
 defineProps(['visible']);
 const emit = defineEmits(['update:visible', 'select']);
 
-const colors = ['#000000', '#424242', /* ...list màu của bạn... */ '#A64D79'];
+const colors = ['#000000', '#424242', '#A64D79'];
 
 const close = () => emit('update:visible', false);
 const select = (color) => {
@@ -27,7 +27,5 @@ const select = (color) => {
 </script>
 
 <style scoped>
-/* Copy CSS liên quan đến popup vào đây */
 .color-popup-overlay { /* ... */ }
-/* ... */
 </style>

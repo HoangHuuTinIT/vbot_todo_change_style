@@ -23,17 +23,14 @@
 /* 垂直间距 */
 /* 透明度 */
 /* 文章场景相关 */
-/* Copy CSS liên quan Editor vào đây */
 .editor-wrapper[data-v-7d79903f] {
   background-color: #fff;
   margin-bottom: 0;
-  /* Bỏ margin bottom mặc định để parent tự chỉnh */
   padding: 15px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
   display: flex;
   flex-direction: column;
   border-radius: 8px;
-  /* Bo tròn đẹp hơn */
 }
 .item-left[data-v-7d79903f] {
   display: flex;
@@ -49,8 +46,6 @@
   font-size: 15px;
   color: #666;
 }
-
-/* Toolbar CSS */
 .toolbar[data-v-7d79903f] {
   background-color: #f9f9fa;
   border: 1px solid #e0e0e0;
@@ -159,8 +154,6 @@
   min-height: 120px;
   overflow-y: auto;
 }
-
-/* Popup Styles */
 .color-popup-overlay[data-v-7d79903f], .link-popup-overlay[data-v-7d79903f] {
   position: fixed;
   z-index: 9999;
@@ -298,7 +291,6 @@ to {
 /* 垂直间距 */
 /* 透明度 */
 /* 文章场景相关 */
-/* CSS chuyên biệt cho DatePicker */
 .flat-item[data-v-245edb6a] {
   background-color: #fff;
   margin-bottom: 12px;

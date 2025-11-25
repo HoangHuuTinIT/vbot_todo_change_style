@@ -134,9 +134,9 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, getCurrentInstance ,watch} from 'vue';
-import { EDITOR_CONFIG } from '@/utils/enums'; // Import Enum đã tạo
+import { EDITOR_CONFIG } from '@/utils/enums'; 
 interface EditorProps {
-    modelValue: string; // V-model luôn là string
+    modelValue: string;
 	placeholder?: string;
 }
 
@@ -146,7 +146,7 @@ const editorId = ref(`editor-${Math.random().toString(36).substring(2, 9)}`);
 // State riêng của Editor
 const editorCtx = ref(null);
 const formats = ref({});
-const instance = getCurrentInstance(); // Để dùng selectorQuery trong component
+const instance = getCurrentInstance(); 
 const isTyping = ref(false);
 // Popup State
 const showLinkPopup = ref(false);
@@ -158,7 +158,6 @@ const focusLinkInput = ref(false);
 const showColorPopup = ref(false);
 const colorType = ref('color');
 
-// Config State (Dùng Enum)
 const currentColor = ref(EDITOR_CONFIG.DEFAULT_COLOR);
 const currentBgColor = ref(EDITOR_CONFIG.TRANSPARENT);
 const currentHeader = ref(EDITOR_CONFIG.HEADER_NORMAL);
@@ -169,23 +168,18 @@ const headerOptions = [{label:'Normal',value:null},{label:'H1',value:1},{label:'
 const alignIcon = computed(() => formats.value.align === 'center' ? 'https://img.icons8.com/ios/50/666666/align-center.png' : (formats.value.align === 'right' ? 'https://img.icons8.com/ios/50/666666/align-right.png' : 'https://img.icons8.com/ios/50/666666/align-left.png'));
 const showAlignPopup = ref(false);
 
-// 2. Cập nhật computed isPopupOpen (để nó biết đang có popup mở)
 const isPopupOpen = computed(() => showLinkPopup.value || showColorPopup.value || showAlignPopup.value);
 
 // 3. Hàm chọn căn lề
 const selectAlign = (alignType) => {
-    format('align', alignType); // alignType nhận vào: 'left', 'center', 'right', 'justify'
-    showAlignPopup.value = false; // Đóng popup sau khi chọn
+    format('align', alignType); 
+    showAlignPopup.value = false; 
 };
 
-// --- METHODS ---
 
 const onEditorReady = () => {
-    // [SỬA 3]: Select theo ID động thay vì cứng '#editor'
     const queryId = `#${editorId.value}`;
-    
     uni.createSelectorQuery().in(instance.proxy).select(queryId).context((res) => {
-        // Kiểm tra kỹ context trả về
         if (res && res.context) {
             editorCtx.value = res.context;
             if (props.modelValue) {
@@ -196,15 +190,10 @@ const onEditorReady = () => {
         }
     }).exec();
 };
-// ... (Các phần import giữ nguyên)
 
-// Thêm một biến để lưu giá trị vừa mới emit ra
 const lastEmittedValue = ref('');
 
-// --- SỬA ĐOẠN WATCH ---
 watch(() => props.modelValue, (newVal) => {
-    // Kiểm tra: Nếu giá trị mới từ cha truyền xuống GIỐNG HỆT giá trị mình vừa gõ
-    // Thì DỪNG LẠI, không setContents nữa để tránh reset con trỏ.
     if (newVal === lastEmittedValue.value) return;
 
     if (editorCtx.value && newVal) {
@@ -212,18 +201,14 @@ watch(() => props.modelValue, (newVal) => {
     }
 });
 
-// --- SỬA ĐOẠN INPUT ---
 const onEditorInput = (e) => {
     const val = e.detail.html;
     
-    // Lưu lại giá trị vừa gõ để lát nữa so sánh trong watch
     lastEmittedValue.value = val;
-    
-    // Emit giá trị ra ngoài
+
     emit('update:modelValue', val);
 };
 
-// ... (Các phần khác giữ nguyên)
 
 const onStatusChange = (e) => { 
     formats.value = e.detail;
@@ -254,7 +239,6 @@ const onStatusChange = (e) => {
     }
 };
 
-// Các hàm toolbar logic (Copy từ controller cũ)
 const format = (name, value) => { if (editorCtx.value) editorCtx.value.format(name, value); };
 const handleLinkBtn = () => { if (isLinkSelected.value || canInsertLink.value) { if(canInsertLink.value && !isLinkSelected.value) linkUrl.value=''; showLinkPopup.value = true; nextTick(() => { focusLinkInput.value = true; }); } else { uni.showToast({ title: 'Bôi đen chữ để chèn Link', icon: 'none' }); } };
 const closeLinkPopup = () => { showLinkPopup.value = false; focusLinkInput.value = false; };
@@ -281,21 +265,19 @@ const insertVideo = () => { uni.chooseVideo({ count: 1, success: (r) => editorCt
 </script>
 
 <style lang="scss" scoped>
-    /* Copy CSS liên quan Editor vào đây */
 .editor-wrapper { 
         background-color: #fff; 
-        margin-bottom: 0; /* Bỏ margin bottom mặc định để parent tự chỉnh */
+        margin-bottom: 0;
         padding: 15px; 
         box-shadow: 0 1px 2px rgba(0,0,0,0.03); 
         display: flex; 
         flex-direction: column;
-        border-radius: 8px; /* Bo tròn đẹp hơn */
-    }    // .editor-label-row { display: flex; align-items: center; margin-bottom: 8px; }
+        border-radius: 8px;
+    }    
     .item-left { display: flex; align-items: center; margin-right: 15px; }
     .item-icon { width: 22px; height: 22px; opacity: 0.6; }
     .label-text { font-size: 15px; color: #666; }
-    
-    /* Toolbar CSS */
+
     .toolbar { background-color: #f9f9fa; border: 1px solid #e0e0e0; border-radius: 4px; padding: 5px; margin-bottom: 10px; }
     .tool-row { display: flex; align-items: center; flex-wrap: wrap; padding: 4px 0; }
     .tool-row:first-child { border-bottom: 1px solid #f0f0f0; margin-bottom: 4px; padding-bottom: 8px; }
@@ -314,8 +296,7 @@ const insertVideo = () => { uni.chooseVideo({ count: 1, success: (r) => editorCt
     
     .ql-container { min-height: 120px; width: 100%; font-size: 15px; line-height: 1.6; color: #333; }
     .static-view { padding: 10px 0; border-top: 1px solid #eee; color: #333; min-height: 120px; overflow-y: auto; }
-    
-    /* Popup Styles */
+
     .color-popup-overlay, .link-popup-overlay { position: fixed; z-index: 9999;;top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.4); z-index: 9999; display: flex; justify-content: center; align-items: center; }
     .color-popup, .link-popup { background-color: #fff; width: 85%; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: popIn 0.2s ease-out; }
     @keyframes popIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
