@@ -1,4 +1,4 @@
-<template> 
+<template>
     <view class="container">
         <view v-if="isLoading" class="loading-overlay">
             <text>Đang tải...</text>
@@ -7,16 +7,12 @@
         <view class="detail-header">
             <view class="header-top">
                 <text class="header-code">#{{ form.code }}</text>
-               <!-- <view class="header-actions">
-                    <text class="btn-text" @click="saveTodo">Lưu</text>
-                </view> -->
             </view>
             <input class="header-title-input" v-model="form.title" placeholder="Tên công việc" />
         </view>
 
         <scroll-view scroll-y="true" class="detail-body">
             
-            <!-- MÔ TẢ -->
             <view class="section-title">Mô tả</view>
             <view class="section-block">
                 <TodoEditor v-model="form.desc" placeholder="Nhập mô tả công việc..." />
@@ -31,226 +27,9 @@
                     </button>
                 </view>
             </view>
-<view class="section-header-row">
-    <text class="section-title no-margin">Bình luận và hoạt động</text>
-    
-    <picker 
-        mode="selector" 
-        :range="commentFilterOptions" 
-        :value="commentFilterIndex" 
-        @change="onCommentFilterChange"
-    >
-        <view class="filter-badge">
-            {{ commentFilterOptions[commentFilterIndex] }} ▾
-        </view>
-    </picker>
-</view>
-			<view class="comments-section">
-			    <!-- Input / editor -->
-			    <view class="comment-input-block">
-			        <view class="editor-container">
-			            <TodoEditor 
-			                v-model="newCommentText" 
-			                :placeholder="isEditingComment ? 'Đang chỉnh sửa...' : (isReplying ? 'Viết câu trả lời...' : 'Viết bình luận')" 
-			            />
-			        </view>
-			
-			        <view v-if="isEditingComment" class="editing-alert">
-			            <text class="editing-text">
-			                Đang chỉnh sửa bình luận của <text class="editing-name">{{ editingMemberName }}</text>
-			            </text>
-			        </view>
-			
-			        <view v-if="isReplying && replyingCommentData" class="reply-alert">
-			            <view class="reply-info">
-			                <text class="reply-label">Đang trả lời bình luận của </text>
-			                <text class="reply-name">{{ replyingMemberName }}</text>
-			            </view>
-			            <view class="reply-quote">
-			                <text class="quote-icon">“</text>
-			                <rich-text :nodes="replyingCommentData.message" class="quote-content"></rich-text>
-			                <text class="quote-icon">”</text>
-			            </view>
-			        </view>
-			
-			        <view class="input-actions">
-			            <button 
-			                v-if="!isEditingComment && !isReplying"
-			                class="btn-save-comment" 
-			                :disabled="isSubmittingComment"
-			                @click="submitComment"
-			            >
-			                {{ isSubmittingComment ? 'Đang lưu...' : 'Lưu lại' }}
-			            </button>
-			
-			            <view v-else-if="isEditingComment" class="edit-actions-row">
-			                <button class="btn-cancel-edit" :disabled="isSubmittingComment" @click="onCancelEditComment">Hủy</button>
-			                <button class="btn-save-comment" :disabled="isSubmittingComment" @click="submitUpdateComment">
-			                    {{ isSubmittingComment ? 'Đang cập nhật...' : 'Cập nhật bình luận' }}
-			                </button>
-			            </view>
-			
-			            <view v-else-if="isReplying" class="edit-actions-row">
-			                <button class="btn-cancel-edit" :disabled="isSubmittingComment" @click="onCancelReply">Hủy</button>
-			                <button class="btn-save-comment" :disabled="isSubmittingComment" @click="submitReply">
-			                    {{ isSubmittingComment ? 'Đang gửi...' : 'Trả lời' }}
-			                </button>
-			            </view>
-			        </view>
-			    </view>
-			
-			    <view class="divider-line"></view>
-			
-			    <!-- Chú ý: v-if / v-else-if / v-else phải đứng liền kề nhau -->
-			    <view v-if="isLoadingComments" class="loading-row">
-			        <text>Đang tải bình luận...</text>
-			    </view>
-			
-			    <view v-else-if="comments.length === 0" class="empty-row">
-			        <text>Chưa có bình luận nào.</text>
-			    </view>
-			
-			    <view v-else>
-			        <view v-for="item in comments" :key="item.id" class="comment-thread">
-			            <view class="comment-row">
-			                <view class="c-avatar" :style="{ backgroundColor: item.senderAvatarColor }">
-			                    <text class="avatar-char white-text">{{ item.senderAvatarChar }}</text>
-			                </view>
-			                <view class="c-content-block">
-			                    <view class="c-header">
-			                        <text class="c-name">{{ item.senderName }}</text>
-			                        <text class="c-time">{{ item.timeDisplay }}</text>
-			                        <text v-if="item.isEdited" class="c-edited"> • Đã chỉnh sửa</text>
-			                    </view>
-			                    <text class="c-action-row">{{ item.actionText }}</text>
-			                    <view class="c-message-box"><rich-text :nodes="item.message"></rich-text></view>
-			                    
-			                    <view class="c-footer-actions">
-			                        <view class="reaction-row">
-			                            <view v-if="item.reactions && item.reactions.length > 0" style="display: flex; gap: 5px;">
-			                                <view v-for="(react, rIdx) in item.reactions" :key="rIdx" class="emoji-tag">{{ react.codeEmoji }}</view>
-			                            </view>
-			                        </view>
-			
-			                        <view class="action-buttons-container" v-if="item.type !== 'UPDATE_TODO'">
-			                                                    <view class="btn-icon-action" @click="onToggleEmojiPicker(item)">
-			                                                        <image src="https://img.icons8.com/ios/50/999999/happy--v1.png" class="icon-action"></image>
-			                                                    </view>
-			
-			                            <view class="btn-icon-action" @click="onRequestReply(item)">
-			                                <image src="https://img.icons8.com/ios/50/999999/speech-bubble--v1.png" class="icon-action"></image>
-			                            </view>
-			
-			                            <template v-if="item.id && String(item.senderId) === String(currentUserId)">
-			                                <view class="btn-icon-action" @click="onRequestEditComment(item.id)">
-			                                    <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
-			                                </view>
-			                                <view class="btn-icon-action" @click="onRequestDeleteComment(item.id)">
-			                                    <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
-			                                </view>
-			                            </template>
-			                        </view>
-			                    </view>
-			                </view>
-			            </view>
-			
-			            <view v-if="item.children && item.children.length > 0" class="replies-wrapper">
-			                <view v-for="child in item.children" :key="child.id" class="comment-row child-row">
-			                   <view class="c-avatar small" :style="{ backgroundColor: child.senderAvatarColor }">
-			                       <text class="avatar-char small-char white-text">{{ child.senderAvatarChar }}</text>
-			                   </view>
-			                    <view class="c-content-block">
-			                        <view class="c-header">
-			                            <text class="c-name">{{ child.senderName }}</text>
-			                            <text class="c-time">{{ child.timeDisplay }}</text>
-			                            <text v-if="child.isEdited" class="c-edited"> • Đã chỉnh sửa</text>
-			                        </view>
-			                        <view class="c-message-box"><rich-text :nodes="child.message"></rich-text></view>
-			
-			                        <view class="c-footer-actions">
-			                            <view class="reaction-row">
-			                                <view v-if="child.reactions && child.reactions.length > 0" style="display: flex; gap: 5px;">
-			                                    <view v-for="(rChild, rcIdx) in child.reactions" :key="rcIdx" class="emoji-tag">{{ rChild.codeEmoji }}</view>
-			                                </view>
-			                            </view>
-			
-			                            <view class="action-buttons-container" v-if="child.type !== 'UPDATE_TODO'">
-			                                                            <view class="btn-icon-action" @click="onToggleEmojiPicker(child)">
-			                                                                <image src="https://img.icons8.com/ios/50/999999/happy--v1.png" class="icon-action"></image>
-			                                                            </view>
-			
-			                                <view class="btn-icon-action" @click="onRequestReply(child)">
-			                                    <image src="https://img.icons8.com/ios/50/999999/speech-bubble--v1.png" class="icon-action"></image>
-			                                </view>
-			
-			                                <template v-if="child.id && String(child.senderId) === String(currentUserId)">
-			                                    <view class="btn-icon-action" @click="onRequestEditComment(child.id)">
-			                                        <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
-			                                    </view>
-			                                    <view class="btn-icon-action" @click="onRequestDeleteComment(child.id)">
-			                                        <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
-			                                    </view>
-			                                </template>
-			                            </view>
-			                        </view>
-			                    </view>
-			                </view>
-			            </view>
-			        </view>
-			    </view>
-			</view>
-			            <view class="modal-overlay" v-if="isConfirmCancelEditOpen" @click.stop>
-			                <view class="modal-container">
-			                    <view class="modal-header">
-			                        <text class="modal-title">Xác nhận hủy</text>
-			                    </view>
-			
-			                    <view class="modal-body">
-			                        <text>Bạn có chắc muốn hủy chỉnh sửa? Các thay đổi sẽ không được lưu.</text>
-			                    </view>
-			
-			                    <view class="modal-footer">
-			                        <button class="modal-btn cancel" @click="continueEditing">Tiếp tục chỉnh sửa</button>
-			                        <button class="modal-btn confirm" @click="confirmCancelEdit">Có, hủy bỏ</button>
-			                    </view>
-			                </view>
-			            </view>
-			
-			            <!-- MODAL XÓA -->
-			            <view class="modal-overlay" v-if="isConfirmDeleteCommentOpen" @click.stop>
-			                <view class="modal-container">
-			                    <view class="modal-header">
-			                        <text class="modal-title">Xác nhận xóa</text>
-			                    </view>
-			
-			                    <view class="modal-body">
-			                        <text>Bạn có chắc muốn xóa bình luận này không?</text>
-			                    </view>
-			
-			                    <view class="modal-footer">
-			                        <button class="modal-btn cancel" @click="cancelDeleteComment">Hủy</button>
-			                        <button class="modal-btn confirm" @click="confirmDeleteComment">Xác nhận</button>
-			                    </view>
-			                </view>
-			            </view>
-						<view class="modal-overlay" v-if="isEmojiPickerOpen" @click="closeEmojiPicker">
-						            <view class="emoji-picker-container" @click.stop>
-						                <view class="emoji-grid">
-						                    <view 
-						                        v-for="(emoji, index) in emojiList" 
-						                        :key="index" 
-						                        class="emoji-item"
-						                        @click="selectEmoji(emoji)"
-						                    >
-						                        {{ emoji }}
-						                    </view>
-						                </view>
-						            </view>
-						        </view>
-            <!-- THÔNG TIN CÔNG VIỆC -->
+
             <view class="section-title">Thông tin công việc</view>
             <view class="info-group">
-
                 <view class="flat-item">
                     <view class="item-left">
                         <image src="https://img.icons8.com/ios/50/666666/checked-checkbox.png" class="item-icon"></image>
@@ -312,7 +91,6 @@
                     @change="onDateUpdate"  />
             </view>
 
-            <!-- KHÁCH HÀNG -->
             <view class="section-title">Thông tin khách hàng</view>
             <view class="info-group customer-block">
                 <view v-if="isLoadingCustomer" class="loading-row">
@@ -352,7 +130,197 @@
                 </view>
             </view>
 
-            <!-- LỊCH SỬ -->
+            <view class="section-header-row">
+                            <view class="toggle-header" @click="toggleComments">
+                                <text class="section-title no-margin">Bình luận và hoạt động</text>
+                                <image 
+                                    src="https://img.icons8.com/ios-glyphs/30/666666/expand-arrow--v1.png" 
+                                    class="toggle-icon" 
+                                    :class="{ 'open': isCommentsOpen }"
+                                ></image>
+                            </view>
+                            
+                            <picker 
+                                mode="selector" 
+                                :range="commentFilterOptions" 
+                                :value="commentFilterIndex" 
+                                @click.stop
+                                @change="onCommentFilterChange"
+                            >
+                                <view class="filter-badge">
+                                    {{ commentFilterOptions[commentFilterIndex] }} ▾
+                                </view>
+                            </picker>
+                        </view>
+
+            <view class="comments-section" v-if="isCommentsOpen">
+                <view class="comment-input-block">
+                    <view class="editor-container">
+                        <TodoEditor 
+                            v-model="newCommentText" 
+                            :placeholder="isEditingComment ? 'Đang chỉnh sửa...' : (isReplying ? 'Viết câu trả lời...' : 'Viết bình luận')" 
+                        />
+                    </view>
+            
+                    <view v-if="isEditingComment" class="editing-alert">
+                        <text class="editing-text">
+                            Đang chỉnh sửa bình luận của <text class="editing-name">{{ editingMemberName }}</text>
+                        </text>
+                    </view>
+            
+                    <view v-if="isReplying && replyingCommentData" class="reply-alert">
+                        <view class="reply-info">
+                            <text class="reply-label">Đang trả lời bình luận của </text>
+                            <text class="reply-name">{{ replyingMemberName }}</text>
+                        </view>
+                        <view class="reply-quote">
+                            <text class="quote-icon">“</text>
+                            <rich-text :nodes="replyingCommentData.message" class="quote-content"></rich-text>
+                            <text class="quote-icon">”</text>
+                        </view>
+                    </view>
+            
+                    <view class="input-actions">
+                        <button 
+                            v-if="!isEditingComment && !isReplying"
+                            class="btn-save-comment" 
+                            :disabled="isSubmittingComment"
+                            @click="submitComment"
+                        >
+                            {{ isSubmittingComment ? 'Đang lưu...' : 'Lưu lại' }}
+                        </button>
+            
+                        <view v-else-if="isEditingComment" class="edit-actions-row">
+                            <button class="btn-cancel-edit" :disabled="isSubmittingComment" @click="onCancelEditComment">Hủy</button>
+                            <button class="btn-save-comment" :disabled="isSubmittingComment" @click="submitUpdateComment">
+                                {{ isSubmittingComment ? 'Đang cập nhật...' : 'Cập nhật bình luận' }}
+                            </button>
+                        </view>
+            
+                        <view v-else-if="isReplying" class="edit-actions-row">
+                            <button class="btn-cancel-edit" :disabled="isSubmittingComment" @click="onCancelReply">Hủy</button>
+                            <button class="btn-save-comment" :disabled="isSubmittingComment" @click="submitReply">
+                                {{ isSubmittingComment ? 'Đang gửi...' : 'Trả lời' }}
+                            </button>
+                        </view>
+                    </view>
+                </view>
+            
+                <view class="divider-line"></view>
+            
+                <view v-if="isLoadingComments" class="loading-row">
+                    <text>Đang tải bình luận...</text>
+                </view>
+            
+                <view v-else-if="comments.length === 0" class="empty-row">
+                    <text>Chưa có bình luận nào.</text>
+                </view>
+            
+                <view v-else>
+                    <view v-for="item in comments" :key="item.id" class="comment-thread">
+                        <view class="comment-row">
+                            <view class="c-avatar" :style="{ backgroundColor: item.senderAvatarColor }">
+                                <text class="avatar-char white-text">{{ item.senderAvatarChar }}</text>
+                            </view>
+                            <view class="c-content-block">
+                                <view class="c-header">
+                                    <text class="c-name">{{ item.senderName }}</text>
+                                    <text class="c-time">{{ item.timeDisplay }}</text>
+                                    <text v-if="item.isEdited" class="c-edited"> • Đã chỉnh sửa</text>
+                                </view>
+                                <text class="c-action-row">{{ item.actionText }}</text>
+                                <view class="c-message-box"><rich-text :nodes="item.message"></rich-text></view>
+                                
+                                <view class="c-footer-actions">
+                                    <view class="reaction-row">
+                                        <view v-if="item.reactions && item.reactions.length > 0" style="display: flex; gap: 5px;">
+                                            <view v-for="(react, rIdx) in item.reactions" :key="rIdx" class="emoji-tag">{{ react.codeEmoji }}</view>
+                                        </view>
+                                    </view>
+            
+                                    <view class="action-buttons-container" v-if="item.type !== 'UPDATE_TODO'">
+                                        <view class="btn-icon-action" @click="onToggleEmojiPicker(item)">
+                                            <image src="https://img.icons8.com/ios/50/999999/happy--v1.png" class="icon-action"></image>
+                                        </view>
+            
+                                        <view class="btn-icon-action" @click="onRequestReply(item)">
+                                            <image src="https://img.icons8.com/ios/50/999999/speech-bubble--v1.png" class="icon-action"></image>
+                                        </view>
+            
+                                        <template v-if="item.id && String(item.senderId) === String(currentUserId)">
+                                            <view class="btn-icon-action" @click="onRequestEditComment(item.id)">
+                                                <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
+                                            </view>
+                                            <view class="btn-icon-action" @click="onRequestDeleteComment(item.id)">
+                                                <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
+                                            </view>
+                                        </template>
+                                    </view>
+                                </view>
+                            </view>
+                        </view>
+            
+                        <view v-if="item.children && item.children.length > 0" class="replies-wrapper">
+                            <view v-for="child in item.children" :key="child.id" class="comment-row child-row">
+                                <view class="c-avatar small" :style="{ backgroundColor: child.senderAvatarColor }">
+                                    <text class="avatar-char small-char white-text">{{ child.senderAvatarChar }}</text>
+                                </view>
+                                <view class="c-content-block">
+                                    <view class="c-header">
+                                        <text class="c-name">{{ child.senderName }}</text>
+                                        <text class="c-time">{{ child.timeDisplay }}</text>
+                                        <text v-if="child.isEdited" class="c-edited"> • Đã chỉnh sửa</text>
+                                    </view>
+                                    <view class="c-message-box"><rich-text :nodes="child.message"></rich-text></view>
+            
+                                    <view class="c-footer-actions">
+                                        <view class="reaction-row">
+                                            <view v-if="child.reactions && child.reactions.length > 0" style="display: flex; gap: 5px;">
+                                                <view v-for="(rChild, rcIdx) in child.reactions" :key="rcIdx" class="emoji-tag">{{ rChild.codeEmoji }}</view>
+                                            </view>
+                                        </view>
+            
+                                        <view class="action-buttons-container" v-if="child.type !== 'UPDATE_TODO'">
+                                            <view class="btn-icon-action" @click="onToggleEmojiPicker(child)">
+                                                <image src="https://img.icons8.com/ios/50/999999/happy--v1.png" class="icon-action"></image>
+                                            </view>
+            
+                                            <view class="btn-icon-action" @click="onRequestReply(child)">
+                                                <image src="https://img.icons8.com/ios/50/999999/speech-bubble--v1.png" class="icon-action"></image>
+                                            </view>
+            
+                                            <template v-if="child.id && String(child.senderId) === String(currentUserId)">
+                                                <view class="btn-icon-action" @click="onRequestEditComment(child.id)">
+                                                    <image src="https://img.icons8.com/ios/50/999999/create-new.png" class="icon-action"></image>
+                                                </view>
+                                                <view class="btn-icon-action" @click="onRequestDeleteComment(child.id)">
+                                                    <image src="https://img.icons8.com/ios/50/999999/trash--v1.png" class="icon-action"></image>
+                                                </view>
+                                            </template>
+                                        </view>
+                                    </view>
+                                </view>
+                            </view>
+                        </view>
+                    </view>
+                </view>
+            </view>
+            
+            <view class="modal-overlay" v-if="isConfirmCancelEditOpen" @click.stop>
+                <view class="modal-container">
+                    <view class="modal-header">
+                        <text class="modal-title">Xác nhận hủy</text>
+                    </view>
+                    <view class="modal-body">
+                        <text>Bạn có chắc muốn hủy chỉnh sửa? Các thay đổi sẽ không được lưu.</text>
+                    </view>
+                    <view class="modal-footer">
+                        <button class="modal-btn cancel" @click="continueEditing">Tiếp tục chỉnh sửa</button>
+                        <button class="modal-btn confirm" @click="confirmCancelEdit">Có, hủy bỏ</button>
+                    </view>
+                </view>
+            </view>
+
             <view class="section-header-row">
                 <text class="section-title no-margin">Lịch sử tương tác</text>
                 
@@ -396,21 +364,35 @@
 
         </scroll-view> 
 
-        <!-- CONFIRM DELETE MODAL -->
-		<view class="modal-overlay" v-if="isConfirmDeleteCommentOpen" @click.stop>
-		    <view class="modal-container">
-		        <view class="modal-header">
-		            <text class="modal-title">Xác nhận xóa</text>
-		        </view>
-		        <view class="modal-body">
-		            <text>Bạn có chắc muốn xóa bình luận này không?</text>
-		        </view>
-		        <view class="modal-footer">
-		            <button class="modal-btn cancel" @click="cancelDeleteComment">Hủy</button>
-		            <button class="modal-btn confirm" @click="confirmDeleteComment">Xác nhận</button>
-		        </view>
-		    </view>
-		</view>
+        <view class="modal-overlay" v-if="isConfirmDeleteCommentOpen" @click.stop>
+            <view class="modal-container">
+                <view class="modal-header">
+                    <text class="modal-title">Xác nhận xóa</text>
+                </view>
+                <view class="modal-body">
+                    <text>Bạn có chắc muốn xóa bình luận này không?</text>
+                </view>
+                <view class="modal-footer">
+                    <button class="modal-btn cancel" @click="cancelDeleteComment">Hủy</button>
+                    <button class="modal-btn confirm" @click="confirmDeleteComment">Xác nhận</button>
+                </view>
+            </view>
+        </view>
+
+        <view class="modal-overlay" v-if="isEmojiPickerOpen" @click="closeEmojiPicker">
+            <view class="emoji-picker-container" @click.stop>
+                <view class="emoji-grid">
+                    <view 
+                        v-for="(emoji, index) in emojiList" 
+                        :key="index" 
+                        class="emoji-item"
+                        @click="selectEmoji(emoji)"
+                    >
+                        {{ emoji }}
+                    </view>
+                </view>
+            </view>
+        </view>
 
     </view>
 </template>
@@ -418,6 +400,7 @@
 
 <script setup lang="ts">
     // Import controller đã chỉnh sửa
+	import { ref } from 'vue';
     import { useTodoDetailController } from '@/controllers/todo_detail';
     import TodoEditor from '@/components/Todo/TodoEditor.vue';
     import TodoDatePicker from '@/components/Todo/TodoDatePicker.vue';
@@ -467,6 +450,10 @@
 				onDateUpdate,
 				isStatusDisabled,
     } = useTodoDetailController();
+	const isCommentsOpen = ref(false);
+	const toggleComments = () => {
+	        isCommentsOpen.value = !isCommentsOpen.value;
+	    };
 </script>
 
 <style lang="scss" scoped>
@@ -904,5 +891,26 @@
 			        color: #999 !important; /* Màu xám */
 			        pointer-events: none;   /* Chặn click chuột (cho chắc chắn) */
 			    }
+				
+				.toggle-header {
+				        display: flex;
+				        align-items: center;
+				        /* Tăng vùng bấm cho dễ thao tác */
+				        padding: 5px 0; 
+				    }
+				
+				    .toggle-icon {
+				        width: 16px;
+				        height: 16px;
+				        margin-left: 8px;
+				        opacity: 0.6;
+				        transition: transform 0.3s ease; /* Hiệu ứng xoay mượt mà */
+				        transform: rotate(-90deg); /* Mặc định xoay ngang (đóng) */
+				    }
+				
+				    .toggle-icon.open {
+				        transform: rotate(0deg); /* Khi mở thì xoay xuống */
+				        opacity: 1;
+				    }
     .loading-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; color: #007aff; font-weight: bold; }
 </style>

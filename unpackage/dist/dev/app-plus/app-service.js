@@ -5038,7 +5038,11 @@ This will fail in production if not fixed.`);
         onDateUpdate,
         isStatusDisabled
       } = useTodoDetailController();
-      const __returned__ = { isLoading, isLoadingCustomer, isLoadingHistory, historyList, form, statusOptions, sourceOptions, assigneeOptions, onStatusChange, onSourceChange, onAssigneeChange, saveTodo, historyFilterOptions, historyFilterIndex, onHistoryFilterChange, comments, isLoadingComments, newCommentText, isSubmittingComment, submitComment, isConfirmDeleteCommentOpen, onRequestDeleteComment, confirmDeleteComment, cancelDeleteComment, currentUserId, isEditingComment, onRequestEditComment, submitUpdateComment, onCancelEditComment, isConfirmCancelEditOpen, continueEditing, confirmCancelEdit, editingMemberName, isEmojiPickerOpen, emojiList, onToggleEmojiPicker, closeEmojiPicker, selectEmoji, isReplying, replyingMemberName, replyingCommentData, onRequestReply, onCancelReply, submitReply, isConfirmCancelReplyOpen, continueReplying, confirmCancelReply, commentFilterIndex, commentFilterOptions, onCommentFilterChange, isSavingDescription, onSaveDescription, onDateUpdate, isStatusDisabled, TodoEditor, TodoDatePicker };
+      const isCommentsOpen = vue.ref(false);
+      const toggleComments = () => {
+        isCommentsOpen.value = !isCommentsOpen.value;
+      };
+      const __returned__ = { isLoading, isLoadingCustomer, isLoadingHistory, historyList, form, statusOptions, sourceOptions, assigneeOptions, onStatusChange, onSourceChange, onAssigneeChange, saveTodo, historyFilterOptions, historyFilterIndex, onHistoryFilterChange, comments, isLoadingComments, newCommentText, isSubmittingComment, submitComment, isConfirmDeleteCommentOpen, onRequestDeleteComment, confirmDeleteComment, cancelDeleteComment, currentUserId, isEditingComment, onRequestEditComment, submitUpdateComment, onCancelEditComment, isConfirmCancelEditOpen, continueEditing, confirmCancelEdit, editingMemberName, isEmojiPickerOpen, emojiList, onToggleEmojiPicker, closeEmojiPicker, selectEmoji, isReplying, replyingMemberName, replyingCommentData, onRequestReply, onCancelReply, submitReply, isConfirmCancelReplyOpen, continueReplying, confirmCancelReply, commentFilterIndex, commentFilterOptions, onCommentFilterChange, isSavingDescription, onSaveDescription, onDateUpdate, isStatusDisabled, isCommentsOpen, toggleComments, TodoEditor, TodoDatePicker };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
@@ -5097,13 +5101,199 @@ This will fail in production if not fixed.`);
             }, vue.toDisplayString($setup.isSavingDescription ? "Đang lưu..." : "Lưu lại"), 9, ["disabled"])
           ])
         ]),
+        vue.createElementVNode("view", { class: "section-title" }, "Thông tin công việc"),
+        vue.createElementVNode("view", { class: "info-group" }, [
+          vue.createElementVNode("view", { class: "flat-item" }, [
+            vue.createElementVNode("view", { class: "item-left" }, [
+              vue.createElementVNode("image", {
+                src: "https://img.icons8.com/ios/50/666666/checked-checkbox.png",
+                class: "item-icon"
+              }),
+              vue.createElementVNode("text", { class: "item-label" }, "Trạng thái")
+            ]),
+            vue.createElementVNode("picker", {
+              mode: "selector",
+              range: $setup.statusOptions,
+              value: $setup.form.statusIndex,
+              disabled: $setup.isStatusDisabled,
+              onChange: _cache[3] || (_cache[3] = (...args) => $setup.onStatusChange && $setup.onStatusChange(...args)),
+              class: "item-picker-box"
+            }, [
+              vue.createElementVNode(
+                "view",
+                {
+                  class: vue.normalizeClass(["picker-text", { "disabled-text": $setup.isStatusDisabled }])
+                },
+                [
+                  vue.createTextVNode(
+                    vue.toDisplayString($setup.statusOptions[$setup.form.statusIndex]) + " ",
+                    1
+                    /* TEXT */
+                  ),
+                  !$setup.isStatusDisabled ? (vue.openBlock(), vue.createElementBlock("text", { key: 0 }, "▾")) : vue.createCommentVNode("v-if", true)
+                ],
+                2
+                /* CLASS */
+              )
+            ], 40, ["range", "value", "disabled"])
+          ]),
+          vue.createElementVNode("view", { class: "flat-item" }, [
+            vue.createElementVNode("view", { class: "item-left" }, [
+              vue.createElementVNode("image", {
+                src: "https://img.icons8.com/ios/50/666666/internet.png",
+                class: "item-icon"
+              }),
+              vue.createElementVNode("text", { class: "item-label" }, "Nguồn")
+            ]),
+            vue.createElementVNode("view", { class: "item-picker-box" }, [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-text disabled-text" },
+                vue.toDisplayString($setup.sourceOptions[$setup.form.sourceIndex] || "Không xác định"),
+                1
+                /* TEXT */
+              )
+            ])
+          ]),
+          vue.createElementVNode("view", { class: "flat-item" }, [
+            vue.createElementVNode("view", { class: "item-left" }, [
+              vue.createElementVNode("image", {
+                src: "https://img.icons8.com/ios/50/666666/user.png",
+                class: "item-icon"
+              }),
+              vue.createElementVNode("text", { class: "item-label" }, "Người được giao")
+            ]),
+            vue.createElementVNode("picker", {
+              mode: "selector",
+              range: $setup.assigneeOptions,
+              value: $setup.form.assigneeIndex,
+              onChange: _cache[4] || (_cache[4] = (...args) => $setup.onAssigneeChange && $setup.onAssigneeChange(...args)),
+              class: "item-picker-box"
+            }, [
+              vue.createElementVNode(
+                "view",
+                { class: "picker-text" },
+                vue.toDisplayString($setup.form.assigneeIndex > -1 && $setup.assigneeOptions[$setup.form.assigneeIndex] ? $setup.assigneeOptions[$setup.form.assigneeIndex] : "Chọn người giao") + " ▾ ",
+                1
+                /* TEXT */
+              )
+            ], 40, ["range", "value"])
+          ]),
+          vue.createVNode($setup["TodoDatePicker"], {
+            dueDate: $setup.form.dueDate,
+            "onUpdate:dueDate": _cache[5] || (_cache[5] = ($event) => $setup.form.dueDate = $event),
+            notifyDate: $setup.form.notifyDate,
+            "onUpdate:notifyDate": _cache[6] || (_cache[6] = ($event) => $setup.form.notifyDate = $event),
+            notifyTime: $setup.form.notifyTime,
+            "onUpdate:notifyTime": _cache[7] || (_cache[7] = ($event) => $setup.form.notifyTime = $event),
+            onChange: $setup.onDateUpdate
+          }, null, 8, ["dueDate", "notifyDate", "notifyTime", "onChange"])
+        ]),
+        vue.createElementVNode("view", { class: "section-title" }, "Thông tin khách hàng"),
+        vue.createElementVNode("view", { class: "info-group customer-block" }, [
+          $setup.isLoadingCustomer ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "loading-row"
+          }, [
+            vue.createElementVNode("text", { class: "loading-text" }, "Đang tải thông tin từ CRM...")
+          ])) : !$setup.form.customerCode ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "empty-row"
+          }, [
+            vue.createElementVNode("text", null, "(Công việc này chưa gắn với khách hàng nào)")
+          ])) : (vue.openBlock(), vue.createElementBlock("view", { key: 2 }, [
+            vue.createElementVNode("view", { class: "flat-item" }, [
+              vue.createElementVNode("view", { class: "item-left" }, [
+                vue.createElementVNode("image", {
+                  src: "https://img.icons8.com/ios/50/666666/user-male-circle.png",
+                  class: "item-icon"
+                }),
+                vue.createElementVNode(
+                  "text",
+                  { class: "item-label" },
+                  vue.toDisplayString($setup.form.customerNameLabel),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              vue.createElementVNode(
+                "view",
+                { class: "item-right-text" },
+                vue.toDisplayString($setup.form.customerName),
+                1
+                /* TEXT */
+              )
+            ]),
+            vue.createElementVNode("view", { class: "flat-item" }, [
+              vue.createElementVNode("view", { class: "item-left" }, [
+                vue.createElementVNode("image", {
+                  src: "https://img.icons8.com/ios/50/666666/phone.png",
+                  class: "item-icon"
+                }),
+                vue.createElementVNode(
+                  "text",
+                  { class: "item-label" },
+                  vue.toDisplayString($setup.form.customerPhoneLabel),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              vue.createElementVNode(
+                "view",
+                { class: "item-right-text phone-text" },
+                vue.toDisplayString($setup.form.customerPhone),
+                1
+                /* TEXT */
+              )
+            ]),
+            vue.createElementVNode("view", { class: "flat-item" }, [
+              vue.createElementVNode("view", { class: "item-left" }, [
+                vue.createElementVNode("image", {
+                  src: "https://img.icons8.com/ios/50/666666/manager.png",
+                  class: "item-icon"
+                }),
+                vue.createElementVNode(
+                  "text",
+                  { class: "item-label" },
+                  vue.toDisplayString($setup.form.customerManagerLabel),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              vue.createElementVNode(
+                "view",
+                { class: "item-right-text highlight-text" },
+                vue.toDisplayString($setup.form.customerManagerName || "(Chưa có)"),
+                1
+                /* TEXT */
+              )
+            ])
+          ]))
+        ]),
         vue.createElementVNode("view", { class: "section-header-row" }, [
-          vue.createElementVNode("text", { class: "section-title no-margin" }, "Bình luận và hoạt động"),
+          vue.createElementVNode("view", {
+            class: "toggle-header",
+            onClick: $setup.toggleComments
+          }, [
+            vue.createElementVNode("text", { class: "section-title no-margin" }, "Bình luận và hoạt động"),
+            vue.createElementVNode(
+              "image",
+              {
+                src: "https://img.icons8.com/ios-glyphs/30/666666/expand-arrow--v1.png",
+                class: vue.normalizeClass(["toggle-icon", { "open": $setup.isCommentsOpen }])
+              },
+              null,
+              2
+              /* CLASS */
+            )
+          ]),
           vue.createElementVNode("picker", {
             mode: "selector",
             range: $setup.commentFilterOptions,
             value: $setup.commentFilterIndex,
-            onChange: _cache[3] || (_cache[3] = (...args) => $setup.onCommentFilterChange && $setup.onCommentFilterChange(...args))
+            onClick: _cache[8] || (_cache[8] = vue.withModifiers(() => {
+            }, ["stop"])),
+            onChange: _cache[9] || (_cache[9] = (...args) => $setup.onCommentFilterChange && $setup.onCommentFilterChange(...args))
           }, [
             vue.createElementVNode(
               "view",
@@ -5114,12 +5304,15 @@ This will fail in production if not fixed.`);
             )
           ], 40, ["range", "value"])
         ]),
-        vue.createElementVNode("view", { class: "comments-section" }, [
+        $setup.isCommentsOpen ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "comments-section"
+        }, [
           vue.createElementVNode("view", { class: "comment-input-block" }, [
             vue.createElementVNode("view", { class: "editor-container" }, [
               vue.createVNode($setup["TodoEditor"], {
                 modelValue: $setup.newCommentText,
-                "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => $setup.newCommentText = $event),
+                "onUpdate:modelValue": _cache[10] || (_cache[10] = ($event) => $setup.newCommentText = $event),
                 placeholder: $setup.isEditingComment ? "Đang chỉnh sửa..." : $setup.isReplying ? "Viết câu trả lời..." : "Viết bình luận"
               }, null, 8, ["modelValue", "placeholder"])
             ]),
@@ -5166,7 +5359,7 @@ This will fail in production if not fixed.`);
                 key: 0,
                 class: "btn-save-comment",
                 disabled: $setup.isSubmittingComment,
-                onClick: _cache[5] || (_cache[5] = (...args) => $setup.submitComment && $setup.submitComment(...args))
+                onClick: _cache[11] || (_cache[11] = (...args) => $setup.submitComment && $setup.submitComment(...args))
               }, vue.toDisplayString($setup.isSubmittingComment ? "Đang lưu..." : "Lưu lại"), 9, ["disabled"])) : $setup.isEditingComment ? (vue.openBlock(), vue.createElementBlock("view", {
                 key: 1,
                 class: "edit-actions-row"
@@ -5174,12 +5367,12 @@ This will fail in production if not fixed.`);
                 vue.createElementVNode("button", {
                   class: "btn-cancel-edit",
                   disabled: $setup.isSubmittingComment,
-                  onClick: _cache[6] || (_cache[6] = (...args) => $setup.onCancelEditComment && $setup.onCancelEditComment(...args))
+                  onClick: _cache[12] || (_cache[12] = (...args) => $setup.onCancelEditComment && $setup.onCancelEditComment(...args))
                 }, "Hủy", 8, ["disabled"]),
                 vue.createElementVNode("button", {
                   class: "btn-save-comment",
                   disabled: $setup.isSubmittingComment,
-                  onClick: _cache[7] || (_cache[7] = (...args) => $setup.submitUpdateComment && $setup.submitUpdateComment(...args))
+                  onClick: _cache[13] || (_cache[13] = (...args) => $setup.submitUpdateComment && $setup.submitUpdateComment(...args))
                 }, vue.toDisplayString($setup.isSubmittingComment ? "Đang cập nhật..." : "Cập nhật bình luận"), 9, ["disabled"])
               ])) : $setup.isReplying ? (vue.openBlock(), vue.createElementBlock("view", {
                 key: 2,
@@ -5188,12 +5381,12 @@ This will fail in production if not fixed.`);
                 vue.createElementVNode("button", {
                   class: "btn-cancel-edit",
                   disabled: $setup.isSubmittingComment,
-                  onClick: _cache[8] || (_cache[8] = (...args) => $setup.onCancelReply && $setup.onCancelReply(...args))
+                  onClick: _cache[14] || (_cache[14] = (...args) => $setup.onCancelReply && $setup.onCancelReply(...args))
                 }, "Hủy", 8, ["disabled"]),
                 vue.createElementVNode("button", {
                   class: "btn-save-comment",
                   disabled: $setup.isSubmittingComment,
-                  onClick: _cache[9] || (_cache[9] = (...args) => $setup.submitReply && $setup.submitReply(...args))
+                  onClick: _cache[15] || (_cache[15] = (...args) => $setup.submitReply && $setup.submitReply(...args))
                 }, vue.toDisplayString($setup.isSubmittingComment ? "Đang gửi..." : "Trả lời"), 9, ["disabled"])
               ])) : vue.createCommentVNode("v-if", true)
             ])
@@ -5493,11 +5686,11 @@ This will fail in production if not fixed.`);
               /* KEYED_FRAGMENT */
             ))
           ]))
-        ]),
+        ])) : vue.createCommentVNode("v-if", true),
         $setup.isConfirmCancelEditOpen ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 0,
+          key: 1,
           class: "modal-overlay",
-          onClick: _cache[12] || (_cache[12] = vue.withModifiers(() => {
+          onClick: _cache[18] || (_cache[18] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
           vue.createElementVNode("view", { class: "modal-container" }, [
@@ -5510,243 +5703,22 @@ This will fail in production if not fixed.`);
             vue.createElementVNode("view", { class: "modal-footer" }, [
               vue.createElementVNode("button", {
                 class: "modal-btn cancel",
-                onClick: _cache[10] || (_cache[10] = (...args) => $setup.continueEditing && $setup.continueEditing(...args))
+                onClick: _cache[16] || (_cache[16] = (...args) => $setup.continueEditing && $setup.continueEditing(...args))
               }, "Tiếp tục chỉnh sửa"),
               vue.createElementVNode("button", {
                 class: "modal-btn confirm",
-                onClick: _cache[11] || (_cache[11] = (...args) => $setup.confirmCancelEdit && $setup.confirmCancelEdit(...args))
+                onClick: _cache[17] || (_cache[17] = (...args) => $setup.confirmCancelEdit && $setup.confirmCancelEdit(...args))
               }, "Có, hủy bỏ")
             ])
           ])
         ])) : vue.createCommentVNode("v-if", true),
-        $setup.isConfirmDeleteCommentOpen ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 1,
-          class: "modal-overlay",
-          onClick: _cache[15] || (_cache[15] = vue.withModifiers(() => {
-          }, ["stop"]))
-        }, [
-          vue.createElementVNode("view", { class: "modal-container" }, [
-            vue.createElementVNode("view", { class: "modal-header" }, [
-              vue.createElementVNode("text", { class: "modal-title" }, "Xác nhận xóa")
-            ]),
-            vue.createElementVNode("view", { class: "modal-body" }, [
-              vue.createElementVNode("text", null, "Bạn có chắc muốn xóa bình luận này không?")
-            ]),
-            vue.createElementVNode("view", { class: "modal-footer" }, [
-              vue.createElementVNode("button", {
-                class: "modal-btn cancel",
-                onClick: _cache[13] || (_cache[13] = (...args) => $setup.cancelDeleteComment && $setup.cancelDeleteComment(...args))
-              }, "Hủy"),
-              vue.createElementVNode("button", {
-                class: "modal-btn confirm",
-                onClick: _cache[14] || (_cache[14] = (...args) => $setup.confirmDeleteComment && $setup.confirmDeleteComment(...args))
-              }, "Xác nhận")
-            ])
-          ])
-        ])) : vue.createCommentVNode("v-if", true),
-        $setup.isEmojiPickerOpen ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 2,
-          class: "modal-overlay",
-          onClick: _cache[17] || (_cache[17] = (...args) => $setup.closeEmojiPicker && $setup.closeEmojiPicker(...args))
-        }, [
-          vue.createElementVNode("view", {
-            class: "emoji-picker-container",
-            onClick: _cache[16] || (_cache[16] = vue.withModifiers(() => {
-            }, ["stop"]))
-          }, [
-            vue.createElementVNode("view", { class: "emoji-grid" }, [
-              (vue.openBlock(true), vue.createElementBlock(
-                vue.Fragment,
-                null,
-                vue.renderList($setup.emojiList, (emoji, index) => {
-                  return vue.openBlock(), vue.createElementBlock("view", {
-                    key: index,
-                    class: "emoji-item",
-                    onClick: ($event) => $setup.selectEmoji(emoji)
-                  }, vue.toDisplayString(emoji), 9, ["onClick"]);
-                }),
-                128
-                /* KEYED_FRAGMENT */
-              ))
-            ])
-          ])
-        ])) : vue.createCommentVNode("v-if", true),
-        vue.createElementVNode("view", { class: "section-title" }, "Thông tin công việc"),
-        vue.createElementVNode("view", { class: "info-group" }, [
-          vue.createElementVNode("view", { class: "flat-item" }, [
-            vue.createElementVNode("view", { class: "item-left" }, [
-              vue.createElementVNode("image", {
-                src: "https://img.icons8.com/ios/50/666666/checked-checkbox.png",
-                class: "item-icon"
-              }),
-              vue.createElementVNode("text", { class: "item-label" }, "Trạng thái")
-            ]),
-            vue.createElementVNode("picker", {
-              mode: "selector",
-              range: $setup.statusOptions,
-              value: $setup.form.statusIndex,
-              disabled: $setup.isStatusDisabled,
-              onChange: _cache[18] || (_cache[18] = (...args) => $setup.onStatusChange && $setup.onStatusChange(...args)),
-              class: "item-picker-box"
-            }, [
-              vue.createElementVNode(
-                "view",
-                {
-                  class: vue.normalizeClass(["picker-text", { "disabled-text": $setup.isStatusDisabled }])
-                },
-                [
-                  vue.createTextVNode(
-                    vue.toDisplayString($setup.statusOptions[$setup.form.statusIndex]) + " ",
-                    1
-                    /* TEXT */
-                  ),
-                  !$setup.isStatusDisabled ? (vue.openBlock(), vue.createElementBlock("text", { key: 0 }, "▾")) : vue.createCommentVNode("v-if", true)
-                ],
-                2
-                /* CLASS */
-              )
-            ], 40, ["range", "value", "disabled"])
-          ]),
-          vue.createElementVNode("view", { class: "flat-item" }, [
-            vue.createElementVNode("view", { class: "item-left" }, [
-              vue.createElementVNode("image", {
-                src: "https://img.icons8.com/ios/50/666666/internet.png",
-                class: "item-icon"
-              }),
-              vue.createElementVNode("text", { class: "item-label" }, "Nguồn")
-            ]),
-            vue.createElementVNode("view", { class: "item-picker-box" }, [
-              vue.createElementVNode(
-                "view",
-                { class: "picker-text disabled-text" },
-                vue.toDisplayString($setup.sourceOptions[$setup.form.sourceIndex] || "Không xác định"),
-                1
-                /* TEXT */
-              )
-            ])
-          ]),
-          vue.createElementVNode("view", { class: "flat-item" }, [
-            vue.createElementVNode("view", { class: "item-left" }, [
-              vue.createElementVNode("image", {
-                src: "https://img.icons8.com/ios/50/666666/user.png",
-                class: "item-icon"
-              }),
-              vue.createElementVNode("text", { class: "item-label" }, "Người được giao")
-            ]),
-            vue.createElementVNode("picker", {
-              mode: "selector",
-              range: $setup.assigneeOptions,
-              value: $setup.form.assigneeIndex,
-              onChange: _cache[19] || (_cache[19] = (...args) => $setup.onAssigneeChange && $setup.onAssigneeChange(...args)),
-              class: "item-picker-box"
-            }, [
-              vue.createElementVNode(
-                "view",
-                { class: "picker-text" },
-                vue.toDisplayString($setup.form.assigneeIndex > -1 && $setup.assigneeOptions[$setup.form.assigneeIndex] ? $setup.assigneeOptions[$setup.form.assigneeIndex] : "Chọn người giao") + " ▾ ",
-                1
-                /* TEXT */
-              )
-            ], 40, ["range", "value"])
-          ]),
-          vue.createVNode($setup["TodoDatePicker"], {
-            dueDate: $setup.form.dueDate,
-            "onUpdate:dueDate": _cache[20] || (_cache[20] = ($event) => $setup.form.dueDate = $event),
-            notifyDate: $setup.form.notifyDate,
-            "onUpdate:notifyDate": _cache[21] || (_cache[21] = ($event) => $setup.form.notifyDate = $event),
-            notifyTime: $setup.form.notifyTime,
-            "onUpdate:notifyTime": _cache[22] || (_cache[22] = ($event) => $setup.form.notifyTime = $event),
-            onChange: $setup.onDateUpdate
-          }, null, 8, ["dueDate", "notifyDate", "notifyTime", "onChange"])
-        ]),
-        vue.createElementVNode("view", { class: "section-title" }, "Thông tin khách hàng"),
-        vue.createElementVNode("view", { class: "info-group customer-block" }, [
-          $setup.isLoadingCustomer ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "loading-row"
-          }, [
-            vue.createElementVNode("text", { class: "loading-text" }, "Đang tải thông tin từ CRM...")
-          ])) : !$setup.form.customerCode ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 1,
-            class: "empty-row"
-          }, [
-            vue.createElementVNode("text", null, "(Công việc này chưa gắn với khách hàng nào)")
-          ])) : (vue.openBlock(), vue.createElementBlock("view", { key: 2 }, [
-            vue.createElementVNode("view", { class: "flat-item" }, [
-              vue.createElementVNode("view", { class: "item-left" }, [
-                vue.createElementVNode("image", {
-                  src: "https://img.icons8.com/ios/50/666666/user-male-circle.png",
-                  class: "item-icon"
-                }),
-                vue.createElementVNode(
-                  "text",
-                  { class: "item-label" },
-                  vue.toDisplayString($setup.form.customerNameLabel),
-                  1
-                  /* TEXT */
-                )
-              ]),
-              vue.createElementVNode(
-                "view",
-                { class: "item-right-text" },
-                vue.toDisplayString($setup.form.customerName),
-                1
-                /* TEXT */
-              )
-            ]),
-            vue.createElementVNode("view", { class: "flat-item" }, [
-              vue.createElementVNode("view", { class: "item-left" }, [
-                vue.createElementVNode("image", {
-                  src: "https://img.icons8.com/ios/50/666666/phone.png",
-                  class: "item-icon"
-                }),
-                vue.createElementVNode(
-                  "text",
-                  { class: "item-label" },
-                  vue.toDisplayString($setup.form.customerPhoneLabel),
-                  1
-                  /* TEXT */
-                )
-              ]),
-              vue.createElementVNode(
-                "view",
-                { class: "item-right-text phone-text" },
-                vue.toDisplayString($setup.form.customerPhone),
-                1
-                /* TEXT */
-              )
-            ]),
-            vue.createElementVNode("view", { class: "flat-item" }, [
-              vue.createElementVNode("view", { class: "item-left" }, [
-                vue.createElementVNode("image", {
-                  src: "https://img.icons8.com/ios/50/666666/manager.png",
-                  class: "item-icon"
-                }),
-                vue.createElementVNode(
-                  "text",
-                  { class: "item-label" },
-                  vue.toDisplayString($setup.form.customerManagerLabel),
-                  1
-                  /* TEXT */
-                )
-              ]),
-              vue.createElementVNode(
-                "view",
-                { class: "item-right-text highlight-text" },
-                vue.toDisplayString($setup.form.customerManagerName || "(Chưa có)"),
-                1
-                /* TEXT */
-              )
-            ])
-          ]))
-        ]),
         vue.createElementVNode("view", { class: "section-header-row" }, [
           vue.createElementVNode("text", { class: "section-title no-margin" }, "Lịch sử tương tác"),
           vue.createElementVNode("picker", {
             mode: "selector",
             range: $setup.historyFilterOptions,
             value: $setup.historyFilterIndex,
-            onChange: _cache[23] || (_cache[23] = (...args) => $setup.onHistoryFilterChange && $setup.onHistoryFilterChange(...args))
+            onChange: _cache[19] || (_cache[19] = (...args) => $setup.onHistoryFilterChange && $setup.onHistoryFilterChange(...args))
           }, [
             vue.createElementVNode(
               "view",
@@ -5822,7 +5794,7 @@ This will fail in production if not fixed.`);
       $setup.isConfirmDeleteCommentOpen ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 1,
         class: "modal-overlay",
-        onClick: _cache[26] || (_cache[26] = vue.withModifiers(() => {
+        onClick: _cache[22] || (_cache[22] = vue.withModifiers(() => {
         }, ["stop"]))
       }, [
         vue.createElementVNode("view", { class: "modal-container" }, [
@@ -5835,12 +5807,39 @@ This will fail in production if not fixed.`);
           vue.createElementVNode("view", { class: "modal-footer" }, [
             vue.createElementVNode("button", {
               class: "modal-btn cancel",
-              onClick: _cache[24] || (_cache[24] = (...args) => $setup.cancelDeleteComment && $setup.cancelDeleteComment(...args))
+              onClick: _cache[20] || (_cache[20] = (...args) => $setup.cancelDeleteComment && $setup.cancelDeleteComment(...args))
             }, "Hủy"),
             vue.createElementVNode("button", {
               class: "modal-btn confirm",
-              onClick: _cache[25] || (_cache[25] = (...args) => $setup.confirmDeleteComment && $setup.confirmDeleteComment(...args))
+              onClick: _cache[21] || (_cache[21] = (...args) => $setup.confirmDeleteComment && $setup.confirmDeleteComment(...args))
             }, "Xác nhận")
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.isEmojiPickerOpen ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 2,
+        class: "modal-overlay",
+        onClick: _cache[24] || (_cache[24] = (...args) => $setup.closeEmojiPicker && $setup.closeEmojiPicker(...args))
+      }, [
+        vue.createElementVNode("view", {
+          class: "emoji-picker-container",
+          onClick: _cache[23] || (_cache[23] = vue.withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          vue.createElementVNode("view", { class: "emoji-grid" }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.emojiList, (emoji, index) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: index,
+                  class: "emoji-item",
+                  onClick: ($event) => $setup.selectEmoji(emoji)
+                }, vue.toDisplayString(emoji), 9, ["onClick"]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
           ])
         ])
       ])) : vue.createCommentVNode("v-if", true)
