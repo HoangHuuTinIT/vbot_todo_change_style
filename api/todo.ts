@@ -76,14 +76,13 @@ export const getTodoDetail = (id: string | number): Promise<any> => {
     });
 };
 
-export const getTodoMessages = (todoId: string | number): Promise<any[]> => {
+export const getTodoMessages = (todoId: string | number, keySearch: string = ''): Promise<any[]> => {
     return request({
-        // Lưu ý: Đường dẫn khác với TODO_API_URL nên ta ghép từ SERVER_BASE_URL
         url: `${SERVER_BASE_URL}/api/module-todo/todoMessages/getAllNoPageWithReact`,
         method: 'GET',
         data: {
             todoId: todoId,
-            keySearch: ''
+            keySearch: keySearch // Truyền keySearch dynamic
         }
     });
 };
@@ -130,3 +129,4 @@ export const reactionTodoMessage = (data: any): Promise<any> => {
         data: data
     });
 };
+

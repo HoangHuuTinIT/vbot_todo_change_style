@@ -21,7 +21,20 @@
             <view class="section-block">
                 <TodoEditor v-model="form.desc" placeholder="Nhập mô tả công việc..." />
             </view>
-			<view class="section-title">Bình luận và hoạt động</view>
+<view class="section-header-row">
+    <text class="section-title no-margin">Bình luận và hoạt động</text>
+    
+    <picker 
+        mode="selector" 
+        :range="commentFilterOptions" 
+        :value="commentFilterIndex" 
+        @change="onCommentFilterChange"
+    >
+        <view class="filter-badge">
+            {{ commentFilterOptions[commentFilterIndex] }} ▾
+        </view>
+    </picker>
+</view>
 			<view class="comments-section">
 			    <!-- Input / editor -->
 			    <view class="comment-input-block">
@@ -420,7 +433,11 @@
 		        submitReply, 
 		        isConfirmCancelReplyOpen, 
 		        continueReplying, 
-		        confirmCancelReply
+		        confirmCancelReply,
+				
+				commentFilterIndex,
+				        commentFilterOptions,
+				        onCommentFilterChange,
     } = useTodoDetailController();
 </script>
 

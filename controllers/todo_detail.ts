@@ -64,6 +64,9 @@ export const useTodoDetailController = () => {
 	const currentReactingComment = ref<any>(null);
 	const emojiList = ['👍', '👎', '😍', '😆', '😱', '😭', '😤'];
 	
+	const commentFilterIndex = ref(0);
+	const commentFilterOptions = ['Tất cả hoạt động', 'Bình luận'];
+	const commentFilterValues = ['', 'COMMENT'];	
 	
 	const onRequestReply = async (item: any) => {
 	        // Reset các trạng thái khác nếu đang dở (ví dụ đang sửa)
@@ -558,20 +561,23 @@ const processCommentData = (item: any): CommentItem => {
 	const fetchComments = async (todoId: string | number) => {
 	        isLoadingComments.value = true;
 	        try {
-	            const rawData = await getTodoMessages(todoId);
+	            // Lấy giá trị keySearch dựa trên index đang chọn
+	            const currentKeySearch = commentFilterValues[commentFilterIndex.value];
+	            
+	            // Gọi API với tham số keySearch mới
+	            const rawData = await getTodoMessages(todoId, currentKeySearch);
 	            
 	            if (Array.isArray(rawData)) {
-	                // Map dữ liệu cha và con
 	                comments.value = rawData.map((parent: any) => {
 	                    const parentComment = processCommentData(parent);
-	                    
-	                    // Xử lý replies (nếu có)
 	                    if (parent.replies && parent.replies.length > 0) {
 	                        parentComment.children = parent.replies.map((child: any) => processCommentData(child));
 	                    }
-	                    
 	                    return parentComment;
 	                });
+	            } else {
+	                // Nếu API lỗi hoặc rỗng thì reset mảng
+	                comments.value = [];
 	            }
 	        } catch (error) {
 	            console.error("Lỗi lấy bình luận:", error);
@@ -579,6 +585,18 @@ const processCommentData = (item: any): CommentItem => {
 	            isLoadingComments.value = false;
 	        }
 	    };
+		const onCommentFilterChange = (e: any) => {
+		        const newIndex = e.detail.value;
+		        // Nếu chọn lại cái cũ thì không làm gì
+		        if (commentFilterIndex.value === newIndex) return;
+		
+		        commentFilterIndex.value = newIndex;
+		        
+		        // Gọi lại API ngay lập tức nếu đã có todoId
+		        if (form.value.id) {
+		            fetchComments(form.value.id);
+		        }
+		    };
     // [LOGIC MỚI] Hàm xử lý lấy thông tin khách hàng
     const fetchCustomerInfo = async (customerUid: string) => {
             isLoadingCustomer.value = true;
@@ -753,5 +771,9 @@ const fetchHistoryLog = async (customerUid: string) => {
 		confirmCancelReply,
 		continueReplying,
 		submitReply,
+		
+		commentFilterIndex,
+		commentFilterOptions,
+		onCommentFilterChange,
     };
 };
